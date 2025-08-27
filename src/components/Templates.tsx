@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Eye } from "lucide-react";
@@ -9,28 +8,32 @@ const templates = [
     name: "Modern Professional",
     description: "Clean, corporate design perfect for business professionals",
     tags: ["Modern", "Corporate", "Clean"],
-    color: "from-blue-500 to-blue-600"
+    color: "from-blue-500 to-blue-600",
+    link: "https://blog-prasanna.onrender.com/"
   },
   {
     id: 2,
     name: "Creative Portfolio",
     description: "Bold, artistic layout ideal for designers and creatives",
     tags: ["Creative", "Artistic", "Bold"],
-    color: "from-purple-500 to-pink-500"
+    color: "from-purple-500 to-pink-500",
+    link: "https://chaiudbbhd.github.io/portfolio-student/"
   },
   {
     id: 3,
     name: "Minimal Elegance",
     description: "Simple, elegant design that focuses on your content",
     tags: ["Minimal", "Elegant", "Simple"],
-    color: "from-gray-500 to-gray-600"
+    color: "from-gray-500 to-gray-600",
+    link: "https://the-simplefolio.netlify.app/"
   },
   {
     id: 4,
     name: "Tech Developer",
     description: "Perfect for developers and tech professionals",
     tags: ["Tech", "Developer", "Modern"],
-    color: "from-green-500 to-emerald-600"
+    color: "from-green-500 to-emerald-600",
+    link: "https://portfolio1-ndem.vercel.app/"
   },
   {
     id: 5,
@@ -38,6 +41,7 @@ const templates = [
     description: "Versatile design great for freelancers in any field",
     tags: ["Freelancer", "Versatile", "Professional"],
     color: "from-orange-500 to-red-500"
+    // no link yet
   }
 ];
 
@@ -66,14 +70,33 @@ export const Templates = () => {
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="bg-white/20 backdrop-blur-sm rounded-lg p-6 text-center">
                     <h3 className="text-white font-semibold text-lg mb-2">{template.name}</h3>
-                    <Button 
-                      variant="secondary" 
-                      size="sm"
-                      className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30"
-                    >
-                      <Eye className="h-4 w-4 mr-2" />
-                      Preview
-                    </Button>
+                    
+                    {template.link ? (
+                      <a 
+                        href={template.link} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                      >
+                        <Button 
+                          variant="secondary" 
+                          size="sm"
+                          className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30"
+                        >
+                          <Eye className="h-4 w-4 mr-2" />
+                          Preview
+                        </Button>
+                      </a>
+                    ) : (
+                      <Button 
+                        variant="secondary" 
+                        size="sm"
+                        className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30"
+                        disabled
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        Preview
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
