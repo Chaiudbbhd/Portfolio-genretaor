@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, Crown, Zap } from "lucide-react";
 
 // 👇 Add Razorpay typings if missing
 declare global {
@@ -10,67 +9,6 @@ declare global {
     Razorpay: any;
   }
 }
-
-type Plan = {
-  name: string;
-  price: number;
-  period: string;
-  description: string;
-  features: string[];
-  icon: React.ElementType;
-  popular: boolean;
-  savings?: string;
-};
-
-const plans: Plan[] = [
-  {
-    name: "Monthly",
-    price: 99,
-    period: "/month",
-    description: "Perfect for quick projects",
-    features: [
-      "Access to all templates",
-      "Unlimited edits",
-      "Live preview",
-      "Download as ZIP",
-      "24/7 support",
-    ],
-    icon: Zap,
-    popular: false,
-  },
-  {
-    name: "Semi-Annual",
-    price: 499,
-    period: "/6 months",
-    description: "Great value for ongoing work",
-    features: [
-      "Everything in Monthly",
-      "Priority support",
-      "Advanced customization",
-      "Multiple downloads",
-      "Extended validity",
-    ],
-    icon: Crown,
-    popular: true,
-    savings: "Save ₹95",
-  },
-  {
-    name: "Annual",
-    price: 999,
-    period: "/12 months",
-    description: "Best value for professionals",
-    features: [
-      "Everything in Semi-Annual",
-      "Premium templates",
-      "Custom domain help",
-      "SEO optimization",
-      "Analytics integration",
-    ],
-    icon: Crown,
-    popular: false,
-    savings: "Save ₹189",
-  },
-];
 
 export const Pricing = () => {
   // 🟢 Razorpay Common Function
@@ -129,7 +67,7 @@ export const Pricing = () => {
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             Choose the plan that works best for you. All plans include access to
-            our premium templates and features.
+            premium templates and core features.
           </p>
         </div>
 
@@ -143,7 +81,15 @@ export const Pricing = () => {
               <span className="text-4xl font-bold">₹99</span>
               <span className="text-gray-600">/month</span>
             </div>
-            <Button className="w-full bg-gray-900 hover:bg-gray-800" onClick={payMonthly}>
+            <ul className="mb-6 space-y-2 text-gray-700">
+              <li>✅ Generate up to 2 templates</li>
+              <li>✅ Basic editing access</li>
+              <li>✅ Email support</li>
+            </ul>
+            <Button
+              className="w-full bg-gray-900 hover:bg-gray-800"
+              onClick={payMonthly}
+            >
               Get Started
             </Button>
           </div>
@@ -161,6 +107,12 @@ export const Pricing = () => {
               <span className="text-4xl font-bold">₹499</span>
               <span className="text-gray-600">/6 months</span>
             </div>
+            <ul className="mb-6 space-y-2 text-gray-700">
+              <li>✅ Generate up to 6 templates</li>
+              <li>✅ Advanced editing access</li>
+              <li>✅ Priority email support</li>
+              <li>✅ Exclusive template designs</li>
+            </ul>
             <Button
               className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
               onClick={paySemiAnnual}
@@ -172,7 +124,10 @@ export const Pricing = () => {
           {/* Annual */}
           <div className="bg-white border border-gray-200 shadow-lg rounded-2xl p-8 relative">
             <div className="absolute -top-2 -right-2">
-              <Badge variant="destructive" className="bg-green-500 hover:bg-green-600">
+              <Badge
+                variant="destructive"
+                className="bg-green-500 hover:bg-green-600"
+              >
                 Save ₹189
               </Badge>
             </div>
@@ -182,7 +137,17 @@ export const Pricing = () => {
               <span className="text-4xl font-bold">₹999</span>
               <span className="text-gray-600">/12 months</span>
             </div>
-            <Button className="w-full bg-gray-900 hover:bg-gray-800" onClick={payAnnual}>
+            <ul className="mb-6 space-y-2 text-gray-700">
+              <li>✅ Generate up to 12 templates</li>
+              <li>✅ Unlimited editing</li>
+              <li>✅ Premium template library</li>
+              <li>✅ 24/7 priority support</li>
+              <li>✅ Early access to new features</li>
+            </ul>
+            <Button
+              className="w-full bg-gray-900 hover:bg-gray-800"
+              onClick={payAnnual}
+            >
               Get Started
             </Button>
           </div>
