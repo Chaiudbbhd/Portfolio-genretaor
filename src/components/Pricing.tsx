@@ -95,7 +95,8 @@ export const Pricing = () => {
           </div>
 
           {/* Semi-Annual */}
-          <div className="bg-gradient-to-br from-purple-50 to-blue-50 border-2 border-purple-400 shadow-xl rounded-2xl p-10 relative">
+          <div className="bg-gradient-to-br from-purple-50 to-blue-50 border-2 border-purple-400 shadow-xl rounded-2xl p-10 relative 
+                          transform transition-transform duration-300 hover:scale-105">
             <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
               <Badge className="bg-blue-600 text-white px-4 py-1 text-sm">Most Popular</Badge>
             </div>
