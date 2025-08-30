@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { StudentForms } from "./StudentForms"; // ✅ imported
 
 // 🟢 Full templates list with IDs 1–26
 const templates = [
@@ -154,7 +155,6 @@ const templates = [
   { id: 26, name: "Non-Profit Sanjivani", description: "NGO React template", tags: ["Charity"], color: "from-teal-500 to-green-700", category: "Other", link: "https://github.com/bhaveshpatil07/The-Sanjivani-NGO-ReactJs.git" }
 
 ];
-
 const categories = ["All", "Students", "Professionals", "Study", "Developers", "Designers", "Other"];
 
 export const Templates = () => {
@@ -168,12 +168,6 @@ export const Templates = () => {
       : templates.filter((t) => t.category === selectedCategory);
 
   const visibleTemplates = showAll ? filteredTemplates : filteredTemplates.slice(0, 6);
-
-  const handleFormSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    alert("✅ Portfolio updated successfully!");
-    setEditingTemplate(null);
-  };
 
   return (
     <section id="templates" className="py-20 px-4 bg-gradient-to-br from-slate-50 to-blue-50">
@@ -306,48 +300,21 @@ export const Templates = () => {
 
         {/* 📝 Edit Portfolio Modal */}
         <Dialog open={!!editingTemplate} onOpenChange={() => setEditingTemplate(null)}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-3xl">
             <DialogHeader>
-              <DialogTitle>Edit Portfolio - {editingTemplate?.name}</DialogTitle>
+              <DialogTitle>Fill Portfolio - {editingTemplate?.name}</DialogTitle>
             </DialogHeader>
 
-            <form className="space-y-6" onSubmit={handleFormSubmit}>
-              <div>
-                <label className="block text-sm font-medium mb-2">Upload Photo</label>
-                <Input type="file" accept="image/*" />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Name</label>
-                <Input placeholder="Enter your name" required />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">About</label>
-                <Textarea placeholder="Write something..." required />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Education</label>
-                <Textarea placeholder="Enter your education" required />
-              </div>
-
-              <div>
-                <h3 className="font-semibold">Projects</h3>
-                <Input type="file" accept="image/*" />
-                <Input placeholder="Live URL" type="url" />
-                <Input placeholder="GitHub URL" type="url" />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Skills</label>
-                <Input placeholder="E.g. React, Node.js, Java" />
-              </div>
-
-              <Button type="submit" className="w-full bg-purple-600 text-white">
-                Save
-              </Button>
-            </form>
+            {editingTemplate?.category === "Students" && (
+              <StudentForms
+                templateId={editingTemplate.id}
+                onSubmit={(data) => {
+                  console.log("📩 Form Data:", data);
+                  alert(`✅ Data submitted for Template ${data.templateId}`);
+                  setEditingTemplate(null);
+                }}
+              />
+            )}
           </DialogContent>
         </Dialog>
       </div>
