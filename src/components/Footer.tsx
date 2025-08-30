@@ -1,5 +1,5 @@
-
 import { Code, Mail, Phone, MapPin } from "lucide-react";
+import { FaYoutube } from "react-icons/fa";
 
 export const Footer = () => {
   return (
@@ -19,15 +19,14 @@ export const Footer = () => {
               Join thousands of satisfied users who've launched their careers with our platform.
             </p>
             <div className="flex space-x-4">
-              <div className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-purple-600 transition-colors cursor-pointer">
-                <span className="text-sm font-semibold">f</span>
-              </div>
-              <div className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-500 transition-colors cursor-pointer">
-                <span className="text-sm font-semibold">t</span>
-              </div>
-              <div className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors cursor-pointer">
-                <span className="text-sm font-semibold">in</span>
-              </div>
+              <a
+                href="https://youtube.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-red-600 transition-colors cursor-pointer"
+              >
+                <FaYoutube className="h-6 w-6 text-white" />
+              </a>
             </div>
           </div>
 
@@ -48,11 +47,41 @@ export const Footer = () => {
             <ul className="space-y-3">
               <li className="flex items-center text-gray-400">
                 <Mail className="h-4 w-4 mr-3" />
-                chaituchaitinya2005@gmail.com
+                <div className="flex flex-col">
+                  <a
+                    href="mailto:chaituchaitinya2005@gmail.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-white transition-colors"
+                  >
+                    chaituchaitinya2005@gmail.com
+                  </a>
+                  <a
+                    href="mailto:arvindguggilapu@gmail.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-white transition-colors"
+                  >
+                    arvindguggilapu@gmail.com
+                  </a>
+                </div>
               </li>
               <li className="flex items-center text-gray-400">
                 <Phone className="h-4 w-4 mr-3" />
-                +91 8328007804
+                <div className="flex flex-col">
+                  <a
+                    href="tel:+918328007804"
+                    className="hover:text-white transition-colors"
+                  >
+                    +91 8328007804
+                  </a>
+                  <a
+                    href="tel:+917993123784"
+                    className="hover:text-white transition-colors"
+                  >
+                    +91 7993123784
+                  </a>
+                </div>
               </li>
               <li className="flex items-center text-gray-400">
                 <MapPin className="h-4 w-4 mr-3" />

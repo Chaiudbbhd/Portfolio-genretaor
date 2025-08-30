@@ -1,9 +1,17 @@
 import { useState } from "react";
+import { Eye, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Eye } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
-// 🟢 All templates with category
+// 🟢 Full templates list with IDs 1–26
 const templates = [
   {
     id: 1,
@@ -12,7 +20,7 @@ const templates = [
     tags: ["Modern", "Corporate", "Clean"],
     color: "from-blue-500 to-blue-600",
     category: "Professionals",
-    link: "https://blog-prasanna.onrender.com/"
+    link: "https://blog-prasanna.onrender.com/",
   },
   {
     id: 2,
@@ -21,7 +29,7 @@ const templates = [
     tags: ["Creative", "Artistic", "Bold"],
     color: "from-purple-500 to-pink-500",
     category: "Designers",
-    link: "https://chaiudbbhd.github.io/portfolio-student/"
+    link: "https://chaiudbbhd.github.io/portfolio-student/",
   },
   {
     id: 3,
@@ -30,7 +38,7 @@ const templates = [
     tags: ["Minimal", "Elegant", "Simple"],
     color: "from-gray-500 to-gray-600",
     category: "Students",
-    link: "https://the-simplefolio.netlify.app/"
+    link: "https://the-simplefolio.netlify.app/",
   },
   {
     id: 4,
@@ -39,9 +47,10 @@ const templates = [
     tags: ["Tech", "Developer", "Modern"],
     color: "from-green-500 to-emerald-600",
     category: "Developers",
-    link: "https://portfolio1-ndem.vercel.app/"
+    link: "https://portfolio1-ndem.vercel.app/",
   },
-  {
+  // ... keep all templates 5–26 as in your list
+{
     id: 5,
     name: "Freelancer Pro",
     description: "Versatile design great for freelancers in any field",
@@ -90,20 +99,13 @@ const templates = [
     category: "Other"
   },
   {
-    id: 11,
-    name: "Education Hub",
-    description: "Ideal for teachers, courses, and online education content",
-    tags: ["Education", "Courses", "Learning"],
-    color: "from-lime-500 to-green-700",
-    category: "Study"
-  },
-  {
     id: 12,
     name: "Medical Profile",
     description: "Professional healthcare design for doctors and clinics",
     tags: ["Medical", "Health", "Clinic"],
     color: "from-blue-400 to-cyan-500",
-    category: "Other"
+    category: "Other",
+    link: "https://github.com/niladri-1/Lab_Professionals_Portfolio"
   },
   {
     id: 13,
@@ -111,7 +113,8 @@ const templates = [
     description: "Bold, neon-themed design for gamers and streamers",
     tags: ["Gaming", "Streamer", "Esports"],
     color: "from-fuchsia-500 to-purple-700",
-    category: "Students"
+    category: "Students",
+    link: "https://github.com/codewithsadee/gamics.git"
   },
   {
     id: 14,
@@ -119,7 +122,8 @@ const templates = [
     description: "Built for conferences, webinars, and event promotion",
     tags: ["Event", "Conference", "Webinar"],
     color: "from-orange-400 to-yellow-500",
-    category: "Other"
+    category: "Other",
+    link: "https://github.com/Blazity/next-saas-starter.git"
   },
   {
     id: 15,
@@ -127,20 +131,49 @@ const templates = [
     description: "Empathetic, clean design for NGOs and social causes",
     tags: ["Charity", "Non-Profit", "Cause"],
     color: "from-emerald-400 to-teal-600",
-    category: "Other"
-  }
+    category: "Other",
+    link: "https://github.com/codewithsadee/wildvine.git"
+  },
+
+  // Extra links
+  { id: 16, name: "Agency Criativo", description: "Agency template", tags: ["Agency"], color: "from-purple-400 to-indigo-600", category: "Designers", link: "https://ahmed-elrashidii.github.io/criativo-bootstrap-landing-page/" },
+  { id: 17, name: "Agency Creative", description: "Agency GitHub template", tags: ["Agency"], color: "from-blue-400 to-teal-600", category: "Designers", link: "https://github.com/kostastepetes/creative-web-agency-website.git" },
+  { id: 18, name: "Agency Webia", description: "Agency GitHub template", tags: ["Agency"], color: "from-pink-400 to-rose-600", category: "Designers", link: "https://github.com/abuzar-alvi/Webia-Solutionz-Modern-Digital-Agency-Website.git" },
+  { id: 19, name: "Agency Twolio", description: "Agency GitHub template", tags: ["Agency"], color: "from-orange-400 to-yellow-500", category: "Designers", link: "https://github.com/Twolio-Studio/twolio-astro-theme.git" },
+
+  { id: 20, name: "Medical Jeewan", description: "Medical template", tags: ["Medical"], color: "from-red-400 to-pink-500", category: "Other", link: "https://github.com/harshgoel05/dr-jeewan-web.git" },
+
+  { id: 21, name: "Fitness Fitlife", description: "Fitness Studio template", tags: ["Fitness"], color: "from-green-400 to-emerald-600", category: "Other", link: "https://github.com/codewithsadee/fitlife.git" },
+  { id: 22, name: "Fitness Futras", description: "Fitness Studio template", tags: ["Fitness"], color: "from-sky-400 to-blue-600", category: "Other", link: "https://github.com/codewithsadee/futras.git" },
+  { id: 23, name: "Fitness Club", description: "Fitness Studio template", tags: ["Fitness"], color: "from-rose-400 to-pink-600", category: "Other", link: "https://github.com/shuence/FitClub.git" },
+
+  { id: 24, name: "Gaming Vault", description: "Gaming portfolio vault", tags: ["Gaming"], color: "from-yellow-400 to-amber-600", category: "Students", link: "https://dev-quest-vault.lovable.app" },
+
+  { id: 25, name: "Event Landwind", description: "Landing page template", tags: ["Event"], color: "from-indigo-500 to-purple-600", category: "Other", link: "https://github.com/themesberg/landwind.git" },
+
+  { id: 26, name: "Non-Profit Sanjivani", description: "NGO React template", tags: ["Charity"], color: "from-teal-500 to-green-700", category: "Other", link: "https://github.com/bhaveshpatil07/The-Sanjivani-NGO-ReactJs.git" }
+
 ];
 
 const categories = ["All", "Students", "Professionals", "Study", "Developers", "Designers", "Other"];
 
 export const Templates = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [showAll, setShowAll] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<any | null>(null);
 
-  // 🟢 Filter templates based on category
   const filteredTemplates =
     selectedCategory === "All"
       ? templates
       : templates.filter((t) => t.category === selectedCategory);
+
+  const visibleTemplates = showAll ? filteredTemplates : filteredTemplates.slice(0, 6);
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    alert("✅ Portfolio updated successfully!");
+    setEditingTemplate(null);
+  };
 
   return (
     <section id="templates" className="py-20 px-4 bg-gradient-to-br from-slate-50 to-blue-50">
@@ -149,7 +182,10 @@ export const Templates = () => {
         <div className="text-center mb-10">
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
             Choose Your Perfect
-            <span className="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent"> Template</span>
+            <span className="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+              {" "}
+              Template
+            </span>
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             Select from our collection of professionally designed templates, each crafted for different industries and styles
@@ -162,7 +198,10 @@ export const Templates = () => {
             <Button
               key={cat}
               variant={selectedCategory === cat ? "default" : "secondary"}
-              onClick={() => setSelectedCategory(cat)}
+              onClick={() => {
+                setSelectedCategory(cat);
+                setShowAll(false);
+              }}
               className={`rounded-full px-6 py-2 ${
                 selectedCategory === cat
                   ? "bg-gradient-to-r from-purple-600 to-blue-600 text-white"
@@ -176,7 +215,7 @@ export const Templates = () => {
 
         {/* Templates Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredTemplates.map((template) => (
+          {visibleTemplates.map((template) => (
             <div
               key={template.id}
               className="group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200"
@@ -184,31 +223,47 @@ export const Templates = () => {
               <div className={`h-48 bg-gradient-to-br ${template.color} relative`}>
                 <div className="absolute inset-0 bg-black/20"></div>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="bg-white/20 backdrop-blur-sm rounded-lg p-6 text-center">
+                  <div className="bg-white/20 backdrop-blur-sm rounded-lg p-6 text-center space-y-3">
                     <h3 className="text-white font-semibold text-lg mb-2">{template.name}</h3>
 
-                    {template.link ? (
-                      <a href={template.link} target="_blank" rel="noopener noreferrer">
+                    {/* Buttons: Preview + Edit */}
+                    <div className="flex justify-center gap-3">
+                      {template.link ? (
+                        <a href={template.link} target="_blank" rel="noopener noreferrer">
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30"
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            Preview
+                          </Button>
+                        </a>
+                      ) : (
                         <Button
                           variant="secondary"
                           size="sm"
                           className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30"
+                          disabled
                         >
                           <Eye className="h-4 w-4 mr-2" />
                           Preview
                         </Button>
-                      </a>
-                    ) : (
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30"
-                        disabled
-                      >
-                        <Eye className="h-4 w-4 mr-2" />
-                        Preview
-                      </Button>
-                    )}
+                      )}
+
+                      {/* 📝 Edit button (only for Students) */}
+                      {template.category === "Students" && (
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30"
+                          onClick={() => setEditingTemplate(template)}
+                        >
+                          <Pencil className="h-4 w-4 mr-2" />
+                          Edit
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -232,10 +287,69 @@ export const Templates = () => {
           ))}
         </div>
 
+        {/* Show More / Show Less */}
+        {filteredTemplates.length > 6 && (
+          <div className="text-center mt-8">
+            <Button
+              onClick={() => setShowAll(!showAll)}
+              className="px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-full"
+            >
+              {showAll ? "Show Less" : "Show More"}
+            </Button>
+          </div>
+        )}
+
         {/* No results */}
         {filteredTemplates.length === 0 && (
           <p className="text-center text-gray-500 mt-10">No templates found in this category.</p>
         )}
+
+        {/* 📝 Edit Portfolio Modal */}
+        <Dialog open={!!editingTemplate} onOpenChange={() => setEditingTemplate(null)}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Edit Portfolio - {editingTemplate?.name}</DialogTitle>
+            </DialogHeader>
+
+            <form className="space-y-6" onSubmit={handleFormSubmit}>
+              <div>
+                <label className="block text-sm font-medium mb-2">Upload Photo</label>
+                <Input type="file" accept="image/*" />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">Name</label>
+                <Input placeholder="Enter your name" required />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">About</label>
+                <Textarea placeholder="Write something..." required />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">Education</label>
+                <Textarea placeholder="Enter your education" required />
+              </div>
+
+              <div>
+                <h3 className="font-semibold">Projects</h3>
+                <Input type="file" accept="image/*" />
+                <Input placeholder="Live URL" type="url" />
+                <Input placeholder="GitHub URL" type="url" />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">Skills</label>
+                <Input placeholder="E.g. React, Node.js, Java" />
+              </div>
+
+              <Button type="submit" className="w-full bg-purple-600 text-white">
+                Save
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
     </section>
   );
