@@ -81,7 +81,8 @@ const templates = [
     description: "Minimal blog layout designed for writers and storytellers",
     tags: ["Blog", "Writer", "Content"],
     color: "from-pink-400 to-rose-600",
-    category: "Students"
+    category: "Students",
+    link: "https://blog-prasanna.onrender.com/",
   },
   {
     id: 9,

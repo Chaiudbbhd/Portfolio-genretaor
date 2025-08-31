@@ -1,4 +1,4 @@
-// src/components/StudentForms.tsx
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -8,239 +8,220 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from "@/components/ui/accordion";
+import { formsConfig } from "@/config/formsConfig";
+import { AuthDialog } from "@/components/AuthDialog";
 
 interface Props {
   templateId: number;
-  onSubmit: (data: any) => void;
+  onSubmit?: (data: any, e?: React.FormEvent<HTMLFormElement>) => void | Promise<void>;
+  isLoggedIn?: boolean;
 }
 
-export const StudentForms = ({ templateId, onSubmit }: Props) => {
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const formData = new FormData(e.target as HTMLFormElement);
-    const data = Object.fromEntries(formData.entries());
-    onSubmit({ templateId, ...data });
+export const StudentForms = ({ templateId, onSubmit, isLoggedIn = false }: Props) => {
+  const template = formsConfig[templateId];
+  const [showAuth, setShowAuth] = useState(false);
+  const [credits, setCredits] = useState<number | null>(null); // Added state to track credits
+
+  if (!template) return <p>No form defined for this template.</p>;
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+
+  if (!isLoggedIn) {
+    setShowAuth(true);
+    return;
+  }
+
+  // Check credits before submitting
+  if (credits !== null && credits <= 0) {
+    alert("❌ You have 0 credits. Please buy a plan to submit this form.");
+    return;
+  }
+
+  const formData = new FormData(e.target as HTMLFormElement);
+
+  try {
+    const res = await fetch("http://localhost:4001/api/sendMail", {
+      method: "POST",
+      body: formData,
+    });
+
+    const result = await res.json();
+    if (result.success) alert("✅ Email sent successfully!");
+    else alert("❌ Failed: " + result.error);
+
+    if (onSubmit) {
+      const data = Object.fromEntries(formData.entries());
+
+      // Call the onSubmit handler
+      await onSubmit({ templateId, ...data }, e);
+
+      // Deduct a credit
+      const deductRes = await fetch("/api/template/use", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ templateId }),
+      });
+
+      const deductData = await deductRes.json();
+      if (deductData.success) {
+        // Refresh credits
+        const userRes = await fetch("/api/user/me");
+        const userData = await userRes.json();
+        setCredits(userData.credits);
+      } else {
+        alert("❌ Could not deduct credit: " + deductData.error);
+      }
+    }
+  } catch (err) {
+    console.error(err);
+    alert("❌ Something went wrong");
+  }
+};
+
+
+  const handleEditAttempt = () => {
+    if (!isLoggedIn) setShowAuth(true);
   };
 
-  // reusable links block
+  const renderField = (field: any, prefix = "") => {
+    const name = prefix ? `${prefix}_${field.name}` : field.name;
+
+    switch (field.type) {
+      case "text":
+        return (
+          <Input
+            key={name}
+            name={name}
+            placeholder={field.label}
+            required={field.required}
+            onFocus={handleEditAttempt}
+            disabled={!isLoggedIn}
+          />
+        );
+
+      case "file":
+        return (
+          <div key={name} className="flex flex-col mb-4">
+            <span className="text-sm font-medium text-gray-700 mb-1">
+              {field.name === "photo"
+                ? "Upload File: Your Photo"
+                : field.name === "resume"
+                ? "Upload File: Your Resume"
+                : "Upload File"}
+            </span>
+            <Input
+              type="file"
+              name={name}
+              accept={field.name === "resume" ? ".pdf,.doc,.docx" : "image/*"}
+              required={field.required}
+              className="block w-full"
+              onClick={!isLoggedIn ? handleEditAttempt : undefined}
+            />
+          </div>
+        );
+
+      case "textarea":
+        return (
+          <Textarea
+            key={name}
+            name={name}
+            placeholder={field.label}
+            required={field.required}
+            onFocus={handleEditAttempt}
+            disabled={!isLoggedIn}
+          />
+        );
+
+      default:
+        return null;
+    }
+  };
+
   const LinksSection = () => (
     <div className="grid grid-cols-2 gap-4">
-      <Input name="github" placeholder="GitHub URL" />
-      <Input name="linkedin" placeholder="LinkedIn URL" />
-      <Input name="gmail" placeholder="Gmail" />
-      <Input name="instagram" placeholder="Instagram URL" />
-      <Input name="facebook" placeholder="Facebook URL" />
-      <Input name="twitter" placeholder="Twitter URL" />
-      <Input name="youtube" placeholder="YouTube URL" />
+      {["github", "linkedin", "gmail", "instagram", "facebook", "twitter", "youtube"].map(
+        (key) => (
+          <Input
+            key={key}
+            name={key}
+            placeholder={key.charAt(0).toUpperCase() + key.slice(1) + " URL"}
+            onFocus={handleEditAttempt}
+            disabled={!isLoggedIn}
+          />
+        )
+      )}
     </div>
   );
 
-  // 🟢 Minimal Elegance (id: 3)
-  if (templateId === 3) {
-    return (
-      <form
-        onSubmit={handleSubmit}
-        className="space-y-6 max-h-[75vh] overflow-y-auto p-2"
-      >
-        <div className="grid grid-cols-2 gap-4">
-          <Input type="file" name="photo" accept="image/*" required />
-          <Input name="name" placeholder="Your Name" required />
-        </div>
-        <Textarea name="about" placeholder="About you" required />
+  return (
+    <>
+      {showAuth && (
+        <AuthDialog>
+          <Button className="hidden" />
+        </AuthDialog>
+      )}
 
-        <Accordion type="multiple" className="w-full">
-          <AccordionItem value="links">
-            <AccordionTrigger>Links</AccordionTrigger>
-            <AccordionContent>
-              <LinksSection />
-            </AccordionContent>
-          </AccordionItem>
+      <div className="relative">
+        {!isLoggedIn && (
+          <div
+            className="absolute inset-0 bg-white/50 z-10 flex items-center justify-center"
+            onClick={handleEditAttempt}
+          >
+            <p className="text-gray-700 font-medium text-lg">Please sign in to edit</p>
+          </div>
+        )}
 
-          <AccordionItem value="projects">
-            <AccordionTrigger>Projects (3)</AccordionTrigger>
-            <AccordionContent>
-              {[1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className="border p-3 rounded-md grid grid-cols-2 gap-3 mb-3"
-                >
-                  <Input
-                    name={`project${i}_title`}
-                    placeholder={`Project ${i} Title`}
-                  />
-                  <Input
-                    type="file"
-                    name={`project${i}_image`}
-                    accept="image/*"
-                  />
-                  <Input name={`project${i}_live`} placeholder="Live URL" />
-                  <Input
-                    name={`project${i}_code`}
-                    placeholder="Repository URL"
-                  />
-                </div>
-              ))}
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
-
-        <Button
-          type="submit"
-          className="w-full bg-purple-600 text-white rounded-md"
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-6 max-h-[75vh] overflow-y-auto p-2 pointer-events-auto"
         >
-          Send
-        </Button>
-      </form>
-    );
-  }
+          <input type="hidden" name="to" value="lpklpk984@gmail.com" />
+          <input
+            type="hidden"
+            name="subject"
+            value={`New submission - ${template?.title || "Form"}`}
+          />
 
-  // 🟢 Blog Writer (id: 8)
-  if (templateId === 8) {
-    return (
-      <form
-        onSubmit={handleSubmit}
-        className="space-y-6 max-h-[75vh] overflow-y-auto p-2"
-      >
-        <div className="grid grid-cols-2 gap-4">
-          <Input type="file" name="photo" accept="image/*" required />
-          <Input name="name" placeholder="Your Name" required />
-        </div>
-        <Input type="file" name="resume" accept=".pdf" />
+          {template.fields.map((f) => renderField(f))}
 
-        <Accordion type="multiple" className="w-full">
-          <AccordionItem value="links">
-            <AccordionTrigger>Links</AccordionTrigger>
-            <AccordionContent>
-              <LinksSection />
-            </AccordionContent>
-          </AccordionItem>
+          <Accordion type="multiple" className="w-full">
+            {template.accordions.map((acc, idx) => (
+              <AccordionItem key={idx} value={`acc-${idx}`}>
+                <AccordionTrigger>{acc.title}</AccordionTrigger>
+                <AccordionContent>
+                  {acc.content === "links" && <LinksSection />}
+                  {acc.fields &&
+                    (!acc.repeat
+                      ? acc.fields.map((f) => renderField(f))
+                      : Array.from({ length: acc.repeat }).map((_, i) => (
+                          <div
+                            key={i}
+                            className="border p-3 rounded-md grid grid-cols-2 gap-3 mb-3"
+                          >
+                            {acc.fields.map((f) =>
+                              renderField(f, `${acc.title.toLowerCase()}${i + 1}`)
+                            )}
+                          </div>
+                        )))}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
 
-          <AccordionItem value="skills">
-            <AccordionTrigger>Skills</AccordionTrigger>
-            <AccordionContent>
-              <Textarea name="skills" placeholder="Technical Skills" />
-              <Textarea name="techstack" placeholder="Tech Stack Known" />
-            </AccordionContent>
-          </AccordionItem>
+          <Button
+            type="submit"
+            className="w-full bg-purple-600 text-white rounded-md"
+            onClick={!isLoggedIn ? handleEditAttempt : undefined}
+          >
+            Send
+          </Button>
+        </form>
 
-          <AccordionItem value="projects">
-            <AccordionTrigger>Projects (6)</AccordionTrigger>
-            <AccordionContent>
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div
-                  key={i}
-                  className="border p-3 rounded-md grid grid-cols-2 gap-3 mb-3"
-                >
-                  <Input
-                    name={`project${i}_title`}
-                    placeholder={`Project ${i} Title`}
-                  />
-                  <Input
-                    type="file"
-                    name={`project${i}_image`}
-                    accept="image/*"
-                  />
-                  <Input name={`project${i}_live`} placeholder="Live URL" />
-                  <Input
-                    name={`project${i}_code`}
-                    placeholder="Repository URL"
-                  />
-                </div>
-              ))}
-            </AccordionContent>
-          </AccordionItem>
-
-          <AccordionItem value="articles">
-            <AccordionTrigger>Articles (6)</AccordionTrigger>
-            <AccordionContent>
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div
-                  key={i}
-                  className="border p-3 rounded-md space-y-3 mb-3"
-                >
-                  <Input
-                    type="file"
-                    name={`article${i}_image`}
-                    accept="image/*"
-                  />
-                  <Textarea
-                    name={`article${i}_content`}
-                    placeholder={`Article ${i} Content`}
-                  />
-                </div>
-              ))}
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
-
-        <Button
-          type="submit"
-          className="w-full bg-purple-600 text-white rounded-md"
-        >
-          Send
-        </Button>
-      </form>
-    );
-  }
-
-  // 🟢 Gaming Vault (id: 24)
-  if (templateId === 24) {
-    return (
-      <form
-        onSubmit={handleSubmit}
-        className="space-y-6 max-h-[75vh] overflow-y-auto p-2"
-      >
-        <div className="grid grid-cols-2 gap-4">
-          <Input type="file" name="photo" accept="image/*" required />
-          <Input name="name" placeholder="Your Name" required />
-        </div>
-        <Textarea name="about" placeholder="About you" required />
-
-        <Accordion type="multiple" className="w-full">
-          <AccordionItem value="links">
-            <AccordionTrigger>Links</AccordionTrigger>
-            <AccordionContent>
-              <LinksSection />
-            </AccordionContent>
-          </AccordionItem>
-
-          <AccordionItem value="projects">
-            <AccordionTrigger>Projects (3)</AccordionTrigger>
-            <AccordionContent>
-              {[1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className="border p-3 rounded-md grid grid-cols-2 gap-3 mb-3"
-                >
-                  <Input
-                    name={`project${i}_title`}
-                    placeholder={`Project ${i} Title`}
-                  />
-                  <Input
-                    type="file"
-                    name={`project${i}_image`}
-                    accept="image/*"
-                  />
-                  <Input name={`project${i}_live`} placeholder="Live URL" />
-                  <Input
-                    name={`project${i}_code`}
-                    placeholder="Repository URL"
-                  />
-                </div>
-              ))}
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
-
-        <Button
-          type="submit"
-          className="w-full bg-purple-600 text-white rounded-md"
-        >
-          Send
-        </Button>
-      </form>
-    );
-  }
-
-  return <p>No form defined for this template.</p>;
+        {credits !== null && (
+          <p className="text-sm text-right text-gray-600 mt-2">Remaining Credits: {credits}</p>
+        )}
+      </div>
+    </>
+  );
 };

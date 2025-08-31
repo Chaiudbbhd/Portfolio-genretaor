@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Code, Menu, X } from "lucide-react";
+import { Code, Menu, X, CreditCard } from "lucide-react";
 import { AuthDialog } from "@/components/AuthDialog";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -18,8 +18,10 @@ import {
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [credits, setCredits] = useState(0);
+  const [buying, setBuying] = useState(false);
 
-  // --- Supabase Auth handling ---
+  // Supabase Auth
   useEffect(() => {
     const getUser = async () => {
       const {
@@ -30,9 +32,7 @@ export const Header = () => {
     getUser();
 
     const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setUser(session?.user ?? null);
-      }
+      (_event, session) => setUser(session?.user ?? null)
     );
 
     return () => {
@@ -40,10 +40,75 @@ export const Header = () => {
     };
   }, []);
 
+  // Fetch Credits
+  const fetchCredits = async () => {
+    if (!user) return;
+    try {
+      const res = await fetch("/api/user/me");
+      const data = await res.json();
+      setCredits(data.credits);
+    } catch (err) {
+      console.error("Error fetching credits:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchCredits();
+  }, [user]);
+
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     setUser(null);
   };
+
+  // Handle Buying Plan
+  const handleBuyCredits = async (plan: "monthly" | "semiannual" | "annual") => {
+    if (!user) return alert("Please sign in to buy credits");
+    setBuying(true);
+    try {
+      const res = await fetch("/api/payment/buy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id, plan }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert(`✅ Purchased ${plan} plan!`);
+        setCredits(data.credits);
+      } else {
+        alert(`❌ Purchase failed: ${data.error}`);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("❌ Something went wrong");
+    } finally {
+      setBuying(false);
+    }
+  };
+
+  const CreditsDropdown = () => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="sm" className="flex items-center space-x-1">
+          <CreditCard className="w-4 h-4" /> 
+          <span>Credits: {credits}</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-44">
+        <DropdownMenuLabel>Buy Credits</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => handleBuyCredits("monthly")} disabled={buying}>
+          Monthly - 2 Credits
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleBuyCredits("semiannual")} disabled={buying}>
+          Semiannual - 6 Credits
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleBuyCredits("annual")} disabled={buying}>
+          Annual - 12 Credits
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 
   return (
     <motion.header
@@ -66,68 +131,45 @@ export const Header = () => {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            <a
-              href="#features"
-              className="text-gray-600 hover:text-purple-600 transition-colors"
-            >
-              Features
-            </a>
-            <a
-              href="#templates"
-              className="text-gray-600 hover:text-purple-600 transition-colors"
-            >
-              Templates
-            </a>
-            <a
-              href="#pricing"
-              className="text-gray-600 hover:text-purple-600 transition-colors"
-            >
-              Pricing
-            </a>
-            <a
-              href="#faq"
-              className="text-gray-600 hover:text-purple-600 transition-colors"
-            >
-              FAQ
-            </a>
+            <a href="#features" className="text-gray-600 hover:text-purple-600 transition-colors">Features</a>
+            <a href="#templates" className="text-gray-600 hover:text-purple-600 transition-colors">Templates</a>
+            <a href="#pricing" className="text-gray-600 hover:text-purple-600 transition-colors">Pricing</a>
+            <a href="#faq" className="text-gray-600 hover:text-purple-600 transition-colors">FAQ</a>
           </nav>
 
           {/* Right Side (Auth/Profile) */}
           <div className="hidden md:flex items-center space-x-4">
             {user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button>
-                    <img
-                      src={
-                        user.user_metadata?.avatar_url || "/default-avatar.png"
-                      }
-                      alt="User Avatar"
-                      className="w-8 h-8 rounded-full border border-gray-300 cursor-pointer"
-                    />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuLabel>
-                    {user.user_metadata?.full_name || user.email}
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={() => (window.location.href = "/profile")}
-                  >
-                    Profile
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleSignOut}>
-                    Sign Out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <>
+                <CreditsDropdown />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button>
+                      <img
+                        src={user.user_metadata?.avatar_url || "/default-avatar.png"}
+                        alt="User Avatar"
+                        className="w-8 h-8 rounded-full border border-gray-300 cursor-pointer"
+                      />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuLabel>
+                      {user.user_metadata?.full_name || user.email}
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => (window.location.href = "/profile")}>
+                      Profile
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleSignOut}>
+                      Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
             ) : (
               <>
                 <AuthDialog>
-                  <Button variant="ghost" className="text-gray-600">
-                    Sign In
-                  </Button>
+                  <Button variant="ghost" className="text-gray-600">Sign In</Button>
                 </AuthDialog>
                 <AuthDialog>
                   <Button className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700">
@@ -148,42 +190,20 @@ export const Header = () => {
         {isMenuOpen && (
           <div className="md:hidden mt-4 pb-4 border-t border-gray-200">
             <nav className="flex flex-col space-y-4 mt-4">
-              <a
-                href="#features"
-                className="text-gray-600 hover:text-purple-600"
-              >
-                Features
-              </a>
-              <a
-                href="#templates"
-                className="text-gray-600 hover:text-purple-600"
-              >
-                Templates
-              </a>
-              <a
-                href="#pricing"
-                className="text-gray-600 hover:text-purple-600"
-              >
-                Pricing
-              </a>
-              <a
-                href="#faq"
-                className="text-gray-600 hover:text-purple-600"
-              >
-                FAQ
-              </a>
+              <a href="#features" className="text-gray-600 hover:text-purple-600">Features</a>
+              <a href="#templates" className="text-gray-600 hover:text-purple-600">Templates</a>
+              <a href="#pricing" className="text-gray-600 hover:text-purple-600">Pricing</a>
+              <a href="#faq" className="text-gray-600 hover:text-purple-600">FAQ</a>
 
               <div className="flex flex-col space-y-2 pt-4">
                 {user ? (
                   <>
+                    <CreditsDropdown />
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <button className="flex items-center space-x-3 px-2">
                           <img
-                            src={
-                              user.user_metadata?.avatar_url ||
-                              "/default-avatar.png"
-                            }
+                            src={user.user_metadata?.avatar_url || "/default-avatar.png"}
                             alt="User Avatar"
                             className="w-8 h-8 rounded-full border border-gray-300"
                           />
@@ -193,9 +213,7 @@ export const Header = () => {
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="start" className="w-48">
-                        <DropdownMenuItem
-                          onClick={() => (window.location.href = "/profile")}
-                        >
+                        <DropdownMenuItem onClick={() => (window.location.href = "/profile")}>
                           Profile
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={handleSignOut}>
@@ -207,9 +225,7 @@ export const Header = () => {
                 ) : (
                   <>
                     <AuthDialog>
-                      <Button variant="ghost" className="justify-start">
-                        Sign In
-                      </Button>
+                      <Button variant="ghost" className="justify-start">Sign In</Button>
                     </AuthDialog>
                     <AuthDialog>
                       <Button className="bg-gradient-to-r from-purple-600 to-blue-600 justify-start">
