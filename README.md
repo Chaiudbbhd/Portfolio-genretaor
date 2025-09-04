@@ -26,8 +26,8 @@ This tool is designed for students, developers, and professionals who want to sh
 ### 1. Clone the Repository
 
 ```sh
-git clone <YOUR_GIT_URL>
-cd <YOUR_PROJECT_NAME>
+git clone https://github.com/Chaiudbbhd/Portfolio-genretaor.git
+cd Portfolio-genretaor
 ```
 
 ### 2. Install Dependencies
