@@ -1,73 +1,82 @@
-# Welcome to your Lovable project
+# Portfolio Generator
 
-## Project info
+Generate your own **professional portfolio in less than 30 minutes** without any coding knowledge.  
+This tool is designed for students, developers, and professionals who want to showcase their work quickly and beautifully.
 
-**URL**: https://lovable.dev/projects/df25a4ff-9a95-4052-9da0-90fbfdc76396
+---
 
-## How can I edit this code?
+## 🚀 Live URL
 
-There are several ways of editing your application.
+👉 [https://portfolio-genretaor.vercel.app/](https://portfolio-genretaor.vercel.app/)
 
-**Use Lovable**
+---
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/df25a4ff-9a95-4052-9da0-90fbfdc76396) and start prompting.
+## 📸 Project Preview
 
-Changes made via Lovable will be committed automatically to this repo.
+**Initial Preview:**  
+<a href="https://ibb.co/C3MB4Fgz">
+  <img src="https://i.ibb.co/pBR2Npcx/Screenshot-2025-09-04-at-7-25-25-PM.png" alt="Initial Screenshot" border="0">
+</a>
 
-**Use your preferred IDE**
+**Next Preview:**  
+<a href="https://ibb.co/pB8LhPm9">
+  <img src="https://i.ibb.co/YFML0Wrq/Screenshot-2025-09-04-at-7-25-32-PM.png" alt="Next Screenshot" border="0">
+</a>
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+---
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 🛠️ How to Edit the Code
 
-Follow these steps:
+### 1. Clone the Repository
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
 git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
 cd <YOUR_PROJECT_NAME>
 
-# Step 3: Install the necessary dependencies.
-npm i
+✏️ Other Ways to Edit
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+Directly on GitHub:
+Navigate to the file → Click the pencil ✏️ → Edit → Commit changes.
 
-**Edit a file directly in GitHub**
+Using GitHub Codespaces:
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Click on Code → Codespaces → New codespace
 
-**Use GitHub Codespaces**
+Edit online and commit changes instantly.
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+🧑‍💻 Technologies Used
 
-## What technologies are used for this project?
+Vite – Fast build tool
 
-This project is built with:
+TypeScript – Type-safe development
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+React – UI framework
 
-## How can I deploy this project?
+shadcn-ui – Modern UI components
 
-Simply open [Lovable](https://lovable.dev/projects/df25a4ff-9a95-4052-9da0-90fbfdc76396) and click on Share -> Publish.
+Tailwind CSS – Utility-first styling
 
-## Can I connect a custom domain to my Lovable project?
+🌍 Deployment
 
-Yes, you can!
+This project can be deployed easily on:
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+Vercel (recommended)
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+Netlify
+
+Any hosting provider that supports React & Vite apps
+
+🔗 Custom Domain
+
+If you want to use your own domain:
+
+On Vercel → Go to your project → Settings → Domains → Add Domain.
+
+Vercel Custom Domain Guide
+
+✨ Build your portfolio in minutes and showcase your skills to the world!
+
+
+---
+
+Do you want me to also add a **“How to Use the Portfolio Generator (step-by-step for use
