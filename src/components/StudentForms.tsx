@@ -159,66 +159,68 @@ export const StudentForms = ({ templateId, onSubmit, isLoggedIn = false }: Props
       )}
 
       <div className="relative">
-        {/* 🔑 Show message only, no overlay */}
-        {!isLoggedIn && (
-          <p className="text-gray-700 font-medium text-lg mb-4">
-            Please sign in to edit
-          </p>
-        )}
+  {/* Overlay only when NOT logged in */}
+  {!isLoggedIn && (
+    <div className="absolute inset-0 bg-white/70 z-10 flex items-center justify-center">
+      <p className="text-gray-700 font-medium text-lg">
+        Please sign in to edit
+      </p>
+    </div>
+  )}
 
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-6 max-h-[75vh] overflow-y-auto p-2"
-        >
-          <input type="hidden" name="to" value="lpklpk984@gmail.com" />
-          <input
-            type="hidden"
-            name="subject"
-            value={`New submission - ${template?.title || "Form"}`}
-          />
+  <form
+    onSubmit={handleSubmit}
+    className="space-y-6 max-h-[75vh] overflow-y-auto p-2"
+  >
+    <input type="hidden" name="to" value="lpklpk984@gmail.com" />
+    <input
+      type="hidden"
+      name="subject"
+      value={`New submission - ${template?.title || "Form"}`}
+    />
 
-          {template.fields.map((f) => renderField(f))}
+    {template.fields.map((f) => renderField(f))}
 
-          <Accordion type="multiple" className="w-full">
-            {template.accordions.map((acc, idx) => (
-              <AccordionItem key={idx} value={`acc-${idx}`}>
-                <AccordionTrigger>{acc.title}</AccordionTrigger>
-                <AccordionContent>
-                  {acc.content === "links" && <LinksSection />}
-                  {acc.fields &&
-                    (!acc.repeat
-                      ? acc.fields.map((f) => renderField(f))
-                      : Array.from({ length: acc.repeat }).map((_, i) => (
-                          <div
-                            key={i}
-                            className="border p-3 rounded-md grid grid-cols-2 gap-3 mb-3"
-                          >
-                            {acc.fields.map((f) =>
-                              renderField(f, `${acc.title.toLowerCase()}${i + 1}`)
-                            )}
-                          </div>
-                        )))}
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
+    <Accordion type="multiple" className="w-full">
+      {template.accordions.map((acc, idx) => (
+        <AccordionItem key={idx} value={`acc-${idx}`}>
+          <AccordionTrigger>{acc.title}</AccordionTrigger>
+          <AccordionContent>
+            {acc.content === "links" && <LinksSection />}
+            {acc.fields &&
+              (!acc.repeat
+                ? acc.fields.map((f) => renderField(f))
+                : Array.from({ length: acc.repeat }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="border p-3 rounded-md grid grid-cols-2 gap-3 mb-3"
+                    >
+                      {acc.fields.map((f) =>
+                        renderField(f, `${acc.title.toLowerCase()}${i + 1}`)
+                      )}
+                    </div>
+                  )))}
+          </AccordionContent>
+        </AccordionItem>
+      ))}
+    </Accordion>
 
-          <Button
-            type="submit"
-            className="w-full bg-purple-600 text-white rounded-md"
-            onClick={!isLoggedIn ? handleEditAttempt : undefined}
-            disabled={!isLoggedIn}
-          >
-            Send
-          </Button>
-        </form>
+    <Button
+      type="submit"
+      className="w-full bg-purple-600 text-white rounded-md"
+      disabled={!isLoggedIn}
+    >
+      Send
+    </Button>
+  </form>
 
-        {credits !== null && (
-          <p className="text-sm text-right text-gray-600 mt-2">
-            Remaining Credits: {credits}
-          </p>
-        )}
-      </div>
+  {credits !== null && (
+    <p className="text-sm text-right text-gray-600 mt-2">
+      Remaining Credits: {credits}
+    </p>
+  )}
+</div>
+
     </>
   );
 };
