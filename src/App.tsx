@@ -1,4 +1,5 @@
 // src/App.tsx
+import { useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,6 +12,12 @@ import { StudentForms } from "./components/StudentForms";
 const queryClient = new QueryClient();
 
 const App = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // mock login/logout handlers (replace with real auth later)
+  const handleLogin = () => setIsLoggedIn(true);
+  const handleLogout = () => setIsLoggedIn(false);
+
   // Parent handler for form submission
   const handleFormSubmit = async (form: HTMLFormElement) => {
     try {
@@ -43,12 +50,13 @@ const App = () => {
             {/* Homepage */}
             <Route path="/" element={<Index />} />
 
-            {/* Form Route */}
+            {/* Form Route with login state */}
             <Route
               path="/form"
               element={
                 <StudentForms
                   templateId={3}
+                  isLoggedIn={isLoggedIn}
                   onSubmit={(data, e) => {
                     if (e) {
                       handleFormSubmit(e.target as HTMLFormElement);

@@ -308,13 +308,15 @@ export const Templates = () => {
 
             {editingTemplate?.category === "Students" && (
               <StudentForms
-                templateId={editingTemplate.id}
-                onSubmit={(data) => {
-                  console.log("📩 Form Data:", data);
-                  alert(`✅ Data submitted for Template ${data.templateId}`);
-                  setEditingTemplate(null);
-                }}
-              />
+  templateId={editingTemplate.id}
+  isLoggedIn={true}  // 🔥 replace with real auth later
+  onSubmit={(data) => {
+    console.log("📩 Form Data:", data);
+    alert(`✅ Data submitted for Template ${data.templateId}`);
+    setEditingTemplate(null);
+  }}
+/>
+
             )}
           </DialogContent>
         </Dialog>
