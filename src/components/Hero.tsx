@@ -25,13 +25,20 @@ export const Hero = () => {
         </p>
         
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-          <Button 
-            size="lg" 
-            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-lg px-8 py-4"
-          >
-            Start Building Now
-            <ArrowRight className="ml-2 h-5 w-5" />
-          </Button>
+          <Button
+  size="lg"
+  className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-lg px-8 py-4"
+  onClick={() => {
+    const target = document.getElementById("templates");
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth" });
+    }
+  }}
+>
+  Start Building Now
+  <ArrowRight className="ml-2 h-5 w-5" />
+</Button>
+
           <Button 
             variant="outline" 
             size="lg" 

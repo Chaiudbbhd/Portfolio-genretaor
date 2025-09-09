@@ -20,65 +20,60 @@ interface Props {
 export const StudentForms = ({ templateId, onSubmit, isLoggedIn = false }: Props) => {
   const template = formsConfig[templateId];
   const [showAuth, setShowAuth] = useState(false);
-  const [credits, setCredits] = useState<number | null>(null); // Added state to track credits
+  const [credits, setCredits] = useState<number | null>(null);
 
   if (!template) return <p>No form defined for this template.</p>;
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (!isLoggedIn) {
-    setShowAuth(true);
-    return;
-  }
+    if (!isLoggedIn) {
+      setShowAuth(true);
+      return;
+    }
 
-  // Check credits before submitting
-  if (credits !== null && credits <= 0) {
-    alert("❌ You have 0 credits. Please buy a plan to submit this form.");
-    return;
-  }
+    if (credits !== null && credits <= 0) {
+      alert("❌ You have 0 credits. Please buy a plan to submit this form.");
+      return;
+    }
 
-  const formData = new FormData(e.target as HTMLFormElement);
+    const formData = new FormData(e.target as HTMLFormElement);
 
-  try {
-    const res = await fetch("http://localhost:4001/api/sendMail", {
-      method: "POST",
-      body: formData,
-    });
-
-    const result = await res.json();
-    if (result.success) alert("✅ Email sent successfully!");
-    else alert("❌ Failed: " + result.error);
-
-    if (onSubmit) {
-      const data = Object.fromEntries(formData.entries());
-
-      // Call the onSubmit handler
-      await onSubmit({ templateId, ...data }, e);
-
-      // Deduct a credit
-      const deductRes = await fetch("/api/template/use", {
+    try {
+      const res = await fetch("http://localhost:4001/api/sendMail", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ templateId }),
+        body: formData,
       });
 
-      const deductData = await deductRes.json();
-      if (deductData.success) {
-        // Refresh credits
-        const userRes = await fetch("/api/user/me");
-        const userData = await userRes.json();
-        setCredits(userData.credits);
-      } else {
-        alert("❌ Could not deduct credit: " + deductData.error);
-      }
-    }
-  } catch (err) {
-    console.error(err);
-    alert("❌ Something went wrong");
-  }
-};
+      const result = await res.json();
+      if (result.success) alert("✅ Email sent successfully!");
+      else alert("❌ Failed: " + result.error);
 
+      if (onSubmit) {
+        const data = Object.fromEntries(formData.entries());
+
+        await onSubmit({ templateId, ...data }, e);
+
+        const deductRes = await fetch("/api/template/use", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ templateId }),
+        });
+
+        const deductData = await deductRes.json();
+        if (deductData.success) {
+          const userRes = await fetch("/api/user/me");
+          const userData = await userRes.json();
+          setCredits(userData.credits);
+        } else {
+          alert("❌ Could not deduct credit: " + deductData.error);
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      alert("❌ Something went wrong");
+    }
+  };
 
   const handleEditAttempt = () => {
     if (!isLoggedIn) setShowAuth(true);
@@ -117,6 +112,7 @@ export const StudentForms = ({ templateId, onSubmit, isLoggedIn = false }: Props
               required={field.required}
               className="block w-full"
               onClick={!isLoggedIn ? handleEditAttempt : undefined}
+              disabled={!isLoggedIn}
             />
           </div>
         );
@@ -163,18 +159,16 @@ export const StudentForms = ({ templateId, onSubmit, isLoggedIn = false }: Props
       )}
 
       <div className="relative">
+        {/* 🔑 Show message only, no overlay */}
         {!isLoggedIn && (
-          <div
-            className="absolute inset-0 bg-white/50 z-10 flex items-center justify-center"
-            onClick={handleEditAttempt}
-          >
-            <p className="text-gray-700 font-medium text-lg">Please sign in to edit</p>
-          </div>
+          <p className="text-gray-700 font-medium text-lg mb-4">
+            Please sign in to edit
+          </p>
         )}
 
         <form
           onSubmit={handleSubmit}
-          className="space-y-6 max-h-[75vh] overflow-y-auto p-2 pointer-events-auto"
+          className="space-y-6 max-h-[75vh] overflow-y-auto p-2"
         >
           <input type="hidden" name="to" value="lpklpk984@gmail.com" />
           <input
@@ -213,13 +207,16 @@ export const StudentForms = ({ templateId, onSubmit, isLoggedIn = false }: Props
             type="submit"
             className="w-full bg-purple-600 text-white rounded-md"
             onClick={!isLoggedIn ? handleEditAttempt : undefined}
+            disabled={!isLoggedIn}
           >
             Send
           </Button>
         </form>
 
         {credits !== null && (
-          <p className="text-sm text-right text-gray-600 mt-2">Remaining Credits: {credits}</p>
+          <p className="text-sm text-right text-gray-600 mt-2">
+            Remaining Credits: {credits}
+          </p>
         )}
       </div>
     </>
