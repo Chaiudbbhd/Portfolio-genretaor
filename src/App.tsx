@@ -1,5 +1,4 @@
 // src/App.tsx
-import { useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,16 +7,11 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { StudentForms } from "./components/StudentForms";
+import { AuthProvider, useAuth } from "./context/AuthContext"; // ✅ import context
 
 const queryClient = new QueryClient();
 
 const App = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  // mock login/logout handlers (replace with real auth later)
-  const handleLogin = () => setIsLoggedIn(true);
-  const handleLogout = () => setIsLoggedIn(false);
-
   // Parent handler for form submission
   const handleFormSubmit = async (form: HTMLFormElement) => {
     try {
@@ -45,31 +39,33 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
-          <Routes>
-            {/* Homepage */}
-            <Route path="/" element={<Index />} />
+        <AuthProvider> {/* ✅ Provide auth globally */}
+          <BrowserRouter>
+            <Routes>
+              {/* Homepage */}
+              <Route path="/" element={<Index />} />
 
-            {/* Form Route with login state */}
-            <Route
-              path="/form"
-              element={
-                <StudentForms
-                  templateId={3}
-                  isLoggedIn={isLoggedIn}
-                  onSubmit={(data, e) => {
-                    if (e) {
-                      handleFormSubmit(e.target as HTMLFormElement);
-                    }
-                  }}
-                />
-              }
-            />
+              {/* Form Route with login state from context */}
+              <Route
+                path="/form"
+                element={
+                  <StudentForms
+                    templateId={3}
+                    isLoggedIn={useAuth().isLoggedIn} // ✅ from context
+                    onSubmit={(data, e) => {
+                      if (e) {
+                        handleFormSubmit(e.target as HTMLFormElement);
+                      }
+                    }}
+                  />
+                }
+              />
 
-            {/* Catch-all */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
+              {/* Catch-all */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );

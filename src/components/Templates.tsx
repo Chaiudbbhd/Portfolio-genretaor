@@ -1,3 +1,4 @@
+// src/components/Templates.tsx
 import { useState } from "react";
 import { Eye, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,9 +9,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { StudentForms } from "./StudentForms"; // ✅ imported
+import { StudentForms } from "./StudentForms"; 
+import { useAuth } from "../context/AuthContext"; // ✅ real auth
 
 // 🟢 Full templates list with IDs 1–26
 const templates = [
@@ -50,14 +50,13 @@ const templates = [
     category: "Developers",
     link: "https://portfolio1-ndem.vercel.app/",
   },
-  // ... keep all templates 5–26 as in your list
-{
+  {
     id: 5,
     name: "Freelancer Pro",
     description: "Versatile design great for freelancers in any field",
     tags: ["Freelancer", "Versatile", "Professional"],
     color: "from-orange-500 to-red-500",
-    category: "Professionals"
+    category: "Professionals",
   },
   {
     id: 6,
@@ -65,7 +64,7 @@ const templates = [
     description: "Dynamic template to showcase startups, products, and investors",
     tags: ["Startup", "Business", "Pitch"],
     color: "from-indigo-500 to-sky-600",
-    category: "Professionals"
+    category: "Professionals",
   },
   {
     id: 7,
@@ -73,7 +72,7 @@ const templates = [
     description: "Perfect for photographers with image-first layouts",
     tags: ["Photography", "Gallery", "Visual"],
     color: "from-yellow-400 to-amber-600",
-    category: "Designers"
+    category: "Designers",
   },
   {
     id: 8,
@@ -90,7 +89,7 @@ const templates = [
     description: "Sleek showcase template for creative agencies and studios",
     tags: ["Agency", "Studio", "Professional"],
     color: "from-teal-500 to-cyan-600",
-    category: "Designers"
+    category: "Designers",
   },
   {
     id: 10,
@@ -98,7 +97,7 @@ const templates = [
     description: "Clean product-focused design for online stores",
     tags: ["E-commerce", "Store", "Products"],
     color: "from-red-400 to-pink-600",
-    category: "Other"
+    category: "Other",
   },
   {
     id: 12,
@@ -107,7 +106,7 @@ const templates = [
     tags: ["Medical", "Health", "Clinic"],
     color: "from-blue-400 to-cyan-500",
     category: "Other",
-    link: "https://github.com/niladri-1/Lab_Professionals_Portfolio"
+    link: "https://github.com/niladri-1/Lab_Professionals_Portfolio",
   },
   {
     id: 13,
@@ -116,7 +115,7 @@ const templates = [
     tags: ["Gaming", "Streamer", "Esports"],
     color: "from-fuchsia-500 to-purple-700",
     category: "Students",
-    link: "https://github.com/codewithsadee/gamics.git"
+    link: "https://github.com/codewithsadee/gamics.git",
   },
   {
     id: 14,
@@ -125,7 +124,7 @@ const templates = [
     tags: ["Event", "Conference", "Webinar"],
     color: "from-orange-400 to-yellow-500",
     category: "Other",
-    link: "https://github.com/Blazity/next-saas-starter.git"
+    link: "https://github.com/Blazity/next-saas-starter.git",
   },
   {
     id: 15,
@@ -134,31 +133,25 @@ const templates = [
     tags: ["Charity", "Non-Profit", "Cause"],
     color: "from-emerald-400 to-teal-600",
     category: "Other",
-    link: "https://github.com/codewithsadee/wildvine.git"
+    link: "https://github.com/codewithsadee/wildvine.git",
   },
-
-  // Extra links
   { id: 16, name: "Agency Criativo", description: "Agency template", tags: ["Agency"], color: "from-purple-400 to-indigo-600", category: "Designers", link: "https://ahmed-elrashidii.github.io/criativo-bootstrap-landing-page/" },
   { id: 17, name: "Agency Creative", description: "Agency GitHub template", tags: ["Agency"], color: "from-blue-400 to-teal-600", category: "Designers", link: "https://github.com/kostastepetes/creative-web-agency-website.git" },
   { id: 18, name: "Agency Webia", description: "Agency GitHub template", tags: ["Agency"], color: "from-pink-400 to-rose-600", category: "Designers", link: "https://github.com/abuzar-alvi/Webia-Solutionz-Modern-Digital-Agency-Website.git" },
   { id: 19, name: "Agency Twolio", description: "Agency GitHub template", tags: ["Agency"], color: "from-orange-400 to-yellow-500", category: "Designers", link: "https://github.com/Twolio-Studio/twolio-astro-theme.git" },
-
   { id: 20, name: "Medical Jeewan", description: "Medical template", tags: ["Medical"], color: "from-red-400 to-pink-500", category: "Other", link: "https://github.com/harshgoel05/dr-jeewan-web.git" },
-
   { id: 21, name: "Fitness Fitlife", description: "Fitness Studio template", tags: ["Fitness"], color: "from-green-400 to-emerald-600", category: "Other", link: "https://github.com/codewithsadee/fitlife.git" },
   { id: 22, name: "Fitness Futras", description: "Fitness Studio template", tags: ["Fitness"], color: "from-sky-400 to-blue-600", category: "Other", link: "https://github.com/codewithsadee/futras.git" },
   { id: 23, name: "Fitness Club", description: "Fitness Studio template", tags: ["Fitness"], color: "from-rose-400 to-pink-600", category: "Other", link: "https://github.com/shuence/FitClub.git" },
-
   { id: 24, name: "Gaming Vault", description: "Gaming portfolio vault", tags: ["Gaming"], color: "from-yellow-400 to-amber-600", category: "Students", link: "https://dev-quest-vault.lovable.app" },
-
   { id: 25, name: "Event Landwind", description: "Landing page template", tags: ["Event"], color: "from-indigo-500 to-purple-600", category: "Other", link: "https://github.com/themesberg/landwind.git" },
-
-  { id: 26, name: "Non-Profit Sanjivani", description: "NGO React template", tags: ["Charity"], color: "from-teal-500 to-green-700", category: "Other", link: "https://github.com/bhaveshpatil07/The-Sanjivani-NGO-ReactJs.git" }
-
+  { id: 26, name: "Non-Profit Sanjivani", description: "NGO React template", tags: ["Charity"], color: "from-teal-500 to-green-700", category: "Other", link: "https://github.com/bhaveshpatil07/The-Sanjivani-NGO-ReactJs.git" },
 ];
+
 const categories = ["All", "Students", "Professionals", "Study", "Developers", "Designers", "Other"];
 
 export const Templates = () => {
+  const { isLoggedIn } = useAuth(); // ✅ get login state
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [showAll, setShowAll] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<any | null>(null);
@@ -308,15 +301,14 @@ export const Templates = () => {
 
             {editingTemplate?.category === "Students" && (
               <StudentForms
-  templateId={editingTemplate.id}
-  isLoggedIn={true}  // 🔥 replace with real auth later
-  onSubmit={(data) => {
-    console.log("📩 Form Data:", data);
-    alert(`✅ Data submitted for Template ${data.templateId}`);
-    setEditingTemplate(null);
-  }}
-/>
-
+                templateId={editingTemplate.id}
+                isLoggedIn={isLoggedIn}   // ✅ real auth now
+                onSubmit={(data) => {
+                  console.log("📩 Form Data:", data);
+                  alert(`✅ Data submitted for Template ${data.templateId}`);
+                  setEditingTemplate(null);
+                }}
+              />
             )}
           </DialogContent>
         </Dialog>
