@@ -151,7 +151,7 @@ const templates = [
 const categories = ["All", "Students", "Professionals", "Study", "Developers", "Designers", "Other"];
 
 export const Templates = () => {
-  const { isLoggedIn } = useAuth(); // ✅ get login state
+  const { isLoggedIn } = useAuth(); // ✅ context auth
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [showAll, setShowAll] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<any | null>(null);
@@ -240,17 +240,19 @@ export const Templates = () => {
                       )}
 
                       {/* 📝 Edit button (only for Students) */}
-                      {template.category === "Students" && (
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30"
-                          onClick={() => setEditingTemplate(template)}
-                        >
-                          <Pencil className="h-4 w-4 mr-2" />
-                          Edit
-                        </Button>
-                      )}
+                      {/* 📝 Edit button (only for Students AND logged in users) */}
+{template.category === "Students" && isLoggedIn && (
+  <Button
+    variant="secondary"
+    size="sm"
+    className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30"
+    onClick={() => setEditingTemplate(template)}
+  >
+    <Pencil className="h-4 w-4 mr-2" />
+    Edit
+  </Button>
+)}
+
                     </div>
                   </div>
                 </div>
@@ -302,7 +304,7 @@ export const Templates = () => {
             {editingTemplate?.category === "Students" && (
               <StudentForms
                 templateId={editingTemplate.id}
-                isLoggedIn={isLoggedIn}   // ✅ real auth now
+                isLoggedIn={isLoggedIn}   // ✅ from context
                 onSubmit={(data) => {
                   console.log("📩 Form Data:", data);
                   alert(`✅ Data submitted for Template ${data.templateId}`);

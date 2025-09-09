@@ -21,7 +21,8 @@ interface Props {
 
 export const StudentForms = ({ templateId, onSubmit, isLoggedIn }: Props) => {
   const auth = useAuth();
-  const canEdit = isLoggedIn ?? auth.isLoggedIn; // ✅ merged logic
+const canEdit = isLoggedIn ?? auth?.isLoggedIn ?? false;
+
 
   const template = formsConfig[templateId];
   const [showAuth, setShowAuth] = useState(false);
