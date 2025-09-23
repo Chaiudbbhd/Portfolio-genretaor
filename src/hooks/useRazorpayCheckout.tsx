@@ -14,8 +14,7 @@ interface OpenRazorpayProps {
   plan: "monthly" | "semiannual" | "annual";
 }
 
-// setCredits is optional; if provided, will update local state
-const useRazorpayCheckout = (setCredits?: React.Dispatch<React.SetStateAction<number>>) => {
+const useRazorpayCheckout = () => {
   const { user, isLoggedIn } = useAuth();
 
   const openRazorpay = useCallback(
@@ -26,20 +25,19 @@ const useRazorpayCheckout = (setCredits?: React.Dispatch<React.SetStateAction<nu
       }
 
       try {
-        // 1️⃣ Create Razorpay order
+        // Create Razorpay order
         const orderRes = await fetch("/api/razorpay/order", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ amount }),
         });
-
         const order = await orderRes.json();
+
         if (!order.id) {
           alert("❌ Failed to create order");
           return;
         }
 
-        // 2️⃣ Setup Razorpay checkout options
         const options = {
           key: import.meta.env.VITE_RAZORPAY_KEY_ID,
           amount: order.amount,
@@ -49,7 +47,6 @@ const useRazorpayCheckout = (setCredits?: React.Dispatch<React.SetStateAction<nu
           order_id: order.id,
           handler: async (response: any) => {
             try {
-              // 3️⃣ Verify payment on server
               const verifyRes = await fetch("/api/razorpay/verify", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -62,11 +59,14 @@ const useRazorpayCheckout = (setCredits?: React.Dispatch<React.SetStateAction<nu
                 return;
               }
 
-              // 4️⃣ Update credits via Supabase RPC
-              const { data, error } = await supabase.rpc("purchase_pack", {
-                uid: user.id,
-                pack: plan,
-              });
+              // ✅ Update credits via Supabase RPC
+              const { data: newCredits, error } = await supabase.rpc(
+                "purchase_pack",
+                {
+                  uid: user.id,
+                  pack: plan,
+                }
+              );
 
               if (error) {
                 console.error("purchase_pack error:", error);
@@ -74,10 +74,13 @@ const useRazorpayCheckout = (setCredits?: React.Dispatch<React.SetStateAction<nu
                 return;
               }
 
-              alert(`✅ ${plan} pack purchased! New balance: ${data} credits`);
+              // ✅ Notify user
+              alert(`✅ ${plan} pack purchased! New balance: ${newCredits} credits`);
 
-              // 5️⃣ Update local state if setCredits is provided
-              if (setCredits) setCredits(data);
+              // ⚡ Dispatch a Supabase real-time event to refresh credits
+              // You can trigger a state update in your component by re-fetching credits
+              // Example: call a custom callback from AuthContext if implemented
+
             } catch (err) {
               console.error("Verification error:", err);
               alert("❌ Could not verify payment");
@@ -90,7 +93,6 @@ const useRazorpayCheckout = (setCredits?: React.Dispatch<React.SetStateAction<nu
           theme: { color: "#3399cc" },
         };
 
-        // 6️⃣ Open Razorpay checkout
         const rzp = new window.Razorpay(options);
         rzp.open();
       } catch (error) {
@@ -98,7 +100,7 @@ const useRazorpayCheckout = (setCredits?: React.Dispatch<React.SetStateAction<nu
         alert("❌ Payment failed to initialize");
       }
     },
-    [user, isLoggedIn, setCredits]
+    [user, isLoggedIn]
   );
 
   return openRazorpay;

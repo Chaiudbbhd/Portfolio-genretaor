@@ -30,31 +30,41 @@ export const StudentForms = ({ templateId, onSubmit, isLoggedIn }: Props) => {
   const [credits, setCredits] = useState<number | null>(null);
   const [isEdited, setIsEdited] = useState(false);
 
-  const openRazorpay = useRazorpayCheckout(); // no need to pass setCredits
+  const openRazorpay = useRazorpayCheckout();
 
   if (!template) return <p>No form defined for this template.</p>;
 
-  // ✅ Fetch current user credits from Supabase
-  useEffect(() => {
-    if (!auth?.user?.id) return;
+  // ✅ Fetch credits
+ const fetchCredits = async () => {
+  if (!auth?.user?.id) return;
+  const { data, error } = await supabase
+    .from("users")
+    .select("credits")
+    .eq("id", auth.user.id)
+    .single();
 
-    const fetchCredits = async () => {
-      const { data, error } = await supabase
-        .from("users")
-        .select("credits")
-        .eq("id", auth.user.id)
-        .single();
+  if (error) {
+    console.error("❌ Error fetching credits:", error);
+    setCredits(0);
+  } else {
+    setCredits(data.credits);
+  }
+};
 
-      if (error) {
-        console.error("❌ Error fetching credits:", error);
-        setCredits(0); // fallback
-      } else {
-        setCredits(data.credits);
-      }
-    };
+// Call initially
+useEffect(() => {
+  fetchCredits();
+}, [auth?.user?.id]);
 
-    fetchCredits();
-  }, [auth?.user?.id]);
+
+  // ✅ Buy credits then refresh
+  const handleBuyCredits = async (
+    plan: "monthly" | "semiannual" | "annual",
+    amount: number
+  ) => {
+    await openRazorpay({ plan, amount });
+    fetchCredits(); // refresh after purchase
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -88,20 +98,23 @@ export const StudentForms = ({ templateId, onSubmit, isLoggedIn }: Props) => {
       }
 
       // 3️⃣ Deduct credit if edited
-      if (isEdited && auth?.user?.id) {
-        const { data: newCredits, error } = await supabase.rpc("use_template", {
-          uid: auth.user.id,
-          tid: templateId,
-        });
+     // 3️⃣ Deduct credit if edited
+if (isEdited && auth?.user?.id) {
+  const { error } = await supabase.rpc("use_template", {
+    uid: auth.user.id,
+    tid: templateId,
+  });
 
-        if (error) {
-          console.error("❌ Error deducting credit:", error);
-          alert("❌ Could not deduct credit.");
-        } else {
-          setCredits(newCredits);
-          setIsEdited(false);
-        }
-      }
+  if (error) {
+    console.error("❌ Error deducting credit:", error);
+    alert("❌ Could not deduct credit.");
+  } else {
+    // ✅ Always re-fetch credits instead of trusting local value
+    await fetchCredits();
+    setIsEdited(false);
+  }
+}
+
     } catch (err) {
       console.error(err);
       alert("❌ Something went wrong");
@@ -186,16 +199,16 @@ export const StudentForms = ({ templateId, onSubmit, isLoggedIn }: Props) => {
     </div>
   );
 
-  // Buy credits buttons
+  // ✅ Use handleBuyCredits instead of openRazorpay directly
   const CreditButtons = () => (
     <div className="mb-4 flex gap-2">
-      <Button onClick={() => openRazorpay({ plan: "monthly", amount: 199 })}>
+      <Button onClick={() => handleBuyCredits("monthly", 199)}>
         Buy Monthly (2 credits)
       </Button>
-      <Button onClick={() => openRazorpay({ plan: "semiannual", amount: 999 })}>
+      <Button onClick={() => handleBuyCredits("semiannual", 999)}>
         Buy Semiannual (6 credits)
       </Button>
-      <Button onClick={() => openRazorpay({ plan: "annual", amount: 1799 })}>
+      <Button onClick={() => handleBuyCredits("annual", 1799)}>
         Buy Annual (12 credits)
       </Button>
     </div>
