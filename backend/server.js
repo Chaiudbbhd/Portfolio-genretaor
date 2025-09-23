@@ -74,18 +74,9 @@ import templateRoutes from "./routes/template.js";
 app.use("/api/payment", auth, paymentRoutes);
 app.use("/api/template", auth, templateRoutes);
 
-// Optional route to fetch logged-in user info (for frontend credits display)
-import User from "./models/User.js";
-app.get("/api/user/me", auth, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id).select("-password");
-    if (!user) return res.status(404).json({ error: "User not found" });
-    res.json({ success: true, credits: user.credits, user });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Something went wrong" });
-  }
-});
+// ========================
+// Removed `/api/user/me` route
+// ========================
 
 // Server start
 const PORT = process.env.PORT || 4001;

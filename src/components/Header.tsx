@@ -42,15 +42,26 @@ export const Header = () => {
 
   // Fetch Credits
   const fetchCredits = async () => {
-    if (!user) return;
-    try {
-      const res = await fetch("/api/user/me");
-      const data = await res.json();
-      setCredits(data.credits);
-    } catch (err) {
-      console.error("Error fetching credits:", err);
+  if (!user) return;
+
+  try {
+    const { data, error } = await supabase
+      .from("users")
+      .select("credits")
+      .eq("id", user.id)
+      .single();
+
+    if (error) {
+      console.error("Error fetching credits:", error);
+      return;
     }
-  };
+
+    setCredits(data.credits);
+  } catch (err) {
+    console.error("Unexpected error:", err);
+  }
+};
+
 
   useEffect(() => {
     fetchCredits();
@@ -63,28 +74,38 @@ export const Header = () => {
 
   // Handle Buying Plan
   const handleBuyCredits = async (plan: "monthly" | "semiannual" | "annual") => {
-    if (!user) return alert("Please sign in to buy credits");
-    setBuying(true);
-    try {
-      const res = await fetch("/api/payment/buy", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.id, plan }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        alert(`✅ Purchased ${plan} plan!`);
-        setCredits(data.credits);
-      } else {
-        alert(`❌ Purchase failed: ${data.error}`);
-      }
-    } catch (err) {
-      console.error(err);
-      alert("❌ Something went wrong");
-    } finally {
-      setBuying(false);
+  if (!user) return alert("Please sign in to buy credits");
+  setBuying(true);
+
+  let creditsToAdd = 0;
+  if (plan === "monthly") creditsToAdd = 2;
+  else if (plan === "semiannual") creditsToAdd = 6;
+  else if (plan === "annual") creditsToAdd = 12;
+
+  try {
+    // Update credits in Supabase
+    const { data, error } = await supabase
+      .from("users")
+      .update({ credits: credits + creditsToAdd })
+      .eq("id", user.id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error updating credits:", error);
+      return alert(`❌ Purchase failed: ${error.message}`);
     }
-  };
+
+    setCredits(data.credits);
+    alert(`✅ Purchased ${plan} plan!`);
+  } catch (err) {
+    console.error(err);
+    alert("❌ Something went wrong");
+  } finally {
+    setBuying(false);
+  }
+};
+
 
   const CreditsDropdown = () => (
     <DropdownMenu>
