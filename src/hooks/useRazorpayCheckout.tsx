@@ -1,3 +1,4 @@
+// hooks/useRazorpayCheckout.tsx
 import { useCallback } from "react";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,7 +14,7 @@ interface OpenRazorpayProps {
   plan: "monthly" | "semiannual" | "annual";
 }
 
-const useRazorpayCheckout = () => {
+const useRazorpayCheckout = (setCredits?: React.Dispatch<React.SetStateAction<number>>) => {
   const { user, isLoggedIn } = useAuth();
 
   const openRazorpay = useCallback(
@@ -24,7 +25,6 @@ const useRazorpayCheckout = () => {
       }
 
       try {
-        // 1️⃣ Create Razorpay order via backend
         const orderRes = await fetch("/api/razorpay/order", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -37,7 +37,6 @@ const useRazorpayCheckout = () => {
           return;
         }
 
-        // 2️⃣ Configure Razorpay checkout
         const options = {
           key: import.meta.env.VITE_RAZORPAY_KEY_ID,
           amount: order.amount,
@@ -47,23 +46,22 @@ const useRazorpayCheckout = () => {
           order_id: order.id,
           handler: async (response: any) => {
             try {
-              // 3️⃣ Verify payment signature with backend
               const verifyRes = await fetch("/api/razorpay/verify", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(response),
               });
-
               const verify = await verifyRes.json();
+
               if (!verify.ok) {
                 alert("❌ Payment Verification Failed!");
                 return;
               }
 
-              // 4️⃣ Call Supabase RPC to add credits & log purchase
+              // ✅ Update credits via Supabase RPC
               const { data, error } = await supabase.rpc("purchase_pack", {
                 uid: user.id,
-                pack: plan, // must match 'monthly' | 'semiannual' | 'annual'
+                pack: plan,
               });
 
               if (error) {
@@ -73,7 +71,9 @@ const useRazorpayCheckout = () => {
               }
 
               alert(`✅ ${plan} pack purchased! New balance: ${data} credits`);
-              // TODO: Update your UI context/state with `data` (latest credit balance)
+
+              // ✅ Call setCredits if provided
+              if (setCredits) setCredits(data);
             } catch (err) {
               console.error("Verification error:", err);
               alert("❌ Could not verify payment");
@@ -93,7 +93,7 @@ const useRazorpayCheckout = () => {
         alert("❌ Payment failed to initialize");
       }
     },
-    [user, isLoggedIn]
+    [user, isLoggedIn, setCredits]
   );
 
   return openRazorpay;

@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/accordion";
 import { formsConfig } from "@/config/formsConfig";
 import { AuthDialog } from "@/components/AuthDialog";
+import useRazorpayCheckout from "@/hooks/useRazorpayCheckout";
 
 interface Props {
   templateId: number;
@@ -27,11 +28,13 @@ export const StudentForms = ({ templateId, onSubmit, isLoggedIn }: Props) => {
   const template = formsConfig[templateId];
   const [showAuth, setShowAuth] = useState(false);
   const [credits, setCredits] = useState<number | null>(null);
-  const [isEdited, setIsEdited] = useState(false); // ✅ track edits
+  const [isEdited, setIsEdited] = useState(false);
+
+  const openRazorpay = useRazorpayCheckout(setCredits);
 
   if (!template) return <p>No form defined for this template.</p>;
 
-  // ✅ Fetch current user credits on mount
+  // Fetch current user credits
   useEffect(() => {
     if (auth?.user?.id) {
       (async () => {
@@ -41,11 +44,8 @@ export const StudentForms = ({ templateId, onSubmit, isLoggedIn }: Props) => {
           .eq("id", auth.user.id)
           .single();
 
-        if (error) {
-          console.error("❌ Error fetching credits:", error);
-        } else {
-          setCredits(data.credits);
-        }
+        if (error) console.error("❌ Error fetching credits:", error);
+        else setCredits(data.credits);
       })();
     }
   }, [auth?.user?.id]);
@@ -66,25 +66,22 @@ export const StudentForms = ({ templateId, onSubmit, isLoggedIn }: Props) => {
     const formData = new FormData(e.target as HTMLFormElement);
 
     try {
-      // 1️⃣ Send the email
+      // 1️⃣ Send email
       const res = await fetch("http://localhost:4001/api/sendMail", {
         method: "POST",
         body: formData,
       });
       const result = await res.json();
-      if (result.success) {
-        alert("✅ Email sent successfully!");
-      } else {
-        alert("❌ Failed: " + result.error);
-      }
+      if (result.success) alert("✅ Email sent successfully!");
+      else alert("❌ Failed: " + result.error);
 
-      // 2️⃣ Call onSubmit (parent callback)
+      // 2️⃣ Parent callback
       if (onSubmit) {
         const data = Object.fromEntries(formData.entries());
         await onSubmit({ templateId, ...data }, e);
       }
 
-      // 3️⃣ Deduct credit only if user edited
+      // 3️⃣ Deduct credit if edited
       if (isEdited) {
         const { data: newCredits, error } = await supabase.rpc("use_template", {
           uid: auth?.user?.id,
@@ -96,7 +93,7 @@ export const StudentForms = ({ templateId, onSubmit, isLoggedIn }: Props) => {
           alert("❌ Could not deduct credit.");
         } else {
           setCredits(newCredits);
-          setIsEdited(false); // reset for next submission
+          setIsEdited(false);
         }
       }
     } catch (err) {
@@ -141,7 +138,6 @@ export const StudentForms = ({ templateId, onSubmit, isLoggedIn }: Props) => {
               name={name}
               accept={field.name === "resume" ? ".pdf,.doc,.docx" : "image/*"}
               required={field.required}
-              className="block w-full"
               onClick={() => setIsEdited(true)}
               onFocus={handleEditAttempt}
               disabled={!canEdit}
@@ -184,6 +180,21 @@ export const StudentForms = ({ templateId, onSubmit, isLoggedIn }: Props) => {
     </div>
   );
 
+  // Buy credits buttons
+  const CreditButtons = () => (
+    <div className="mb-4 flex gap-2">
+      <Button onClick={() => openRazorpay({ plan: "monthly", amount: 199 })}>
+        Buy Monthly (2 credits)
+      </Button>
+      <Button onClick={() => openRazorpay({ plan: "semiannual", amount: 999 })}>
+        Buy Semiannual (6 credits)
+      </Button>
+      <Button onClick={() => openRazorpay({ plan: "annual", amount: 1799 })}>
+        Buy Annual (12 credits)
+      </Button>
+    </div>
+  );
+
   return (
     <>
       {showAuth && (
@@ -195,11 +206,11 @@ export const StudentForms = ({ templateId, onSubmit, isLoggedIn }: Props) => {
       <div className="relative">
         {!canEdit && (
           <div className="absolute inset-0 bg-white/70 z-10 flex items-center justify-center">
-            <p className="text-gray-700 font-medium text-lg">
-              Please sign in to edit
-            </p>
+            <p className="text-gray-700 font-medium text-lg">Please sign in to edit</p>
           </div>
         )}
+
+        {credits !== null && credits <= 0 && <CreditButtons />}
 
         <form
           onSubmit={handleSubmit}
@@ -241,7 +252,7 @@ export const StudentForms = ({ templateId, onSubmit, isLoggedIn }: Props) => {
           <Button
             type="submit"
             className="w-full bg-purple-600 text-white rounded-md"
-            disabled={!canEdit}
+            disabled={!canEdit || (credits !== null && credits <= 0)}
           >
             Send
           </Button>
