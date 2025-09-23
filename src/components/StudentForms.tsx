@@ -1,6 +1,7 @@
 // src/components/StudentForms.tsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
+import { supabase } from "../lib/supabaseClient";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -16,19 +17,38 @@ import { AuthDialog } from "@/components/AuthDialog";
 interface Props {
   templateId: number;
   onSubmit?: (data: any, e?: React.FormEvent<HTMLFormElement>) => void | Promise<void>;
-  isLoggedIn?: boolean; // ✅ optional, fallback to context
+  isLoggedIn?: boolean;
 }
 
 export const StudentForms = ({ templateId, onSubmit, isLoggedIn }: Props) => {
   const auth = useAuth();
-const canEdit = isLoggedIn ?? auth?.isLoggedIn ?? false;
-
+  const canEdit = isLoggedIn ?? auth?.isLoggedIn ?? false;
 
   const template = formsConfig[templateId];
   const [showAuth, setShowAuth] = useState(false);
   const [credits, setCredits] = useState<number | null>(null);
+  const [isEdited, setIsEdited] = useState(false); // ✅ track edits
 
   if (!template) return <p>No form defined for this template.</p>;
+
+  // ✅ Fetch current user credits on mount
+  useEffect(() => {
+    if (auth?.user?.id) {
+      (async () => {
+        const { data, error } = await supabase
+          .from("users")
+          .select("credits")
+          .eq("id", auth.user.id)
+          .single();
+
+        if (error) {
+          console.error("❌ Error fetching credits:", error);
+        } else {
+          setCredits(data.credits);
+        }
+      })();
+    }
+  }, [auth?.user?.id]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -46,33 +66,37 @@ const canEdit = isLoggedIn ?? auth?.isLoggedIn ?? false;
     const formData = new FormData(e.target as HTMLFormElement);
 
     try {
+      // 1️⃣ Send the email
       const res = await fetch("http://localhost:4001/api/sendMail", {
         method: "POST",
         body: formData,
       });
-
       const result = await res.json();
-      if (result.success) alert("✅ Email sent successfully!");
-      else alert("❌ Failed: " + result.error);
+      if (result.success) {
+        alert("✅ Email sent successfully!");
+      } else {
+        alert("❌ Failed: " + result.error);
+      }
 
+      // 2️⃣ Call onSubmit (parent callback)
       if (onSubmit) {
         const data = Object.fromEntries(formData.entries());
-
         await onSubmit({ templateId, ...data }, e);
+      }
 
-        const deductRes = await fetch("/api/template/use", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ templateId }),
+      // 3️⃣ Deduct credit only if user edited
+      if (isEdited) {
+        const { data: newCredits, error } = await supabase.rpc("use_template", {
+          uid: auth?.user?.id,
+          tid: templateId,
         });
 
-        const deductData = await deductRes.json();
-        if (deductData.success) {
-          const userRes = await fetch("/api/user/me");
-          const userData = await userRes.json();
-          setCredits(userData.credits);
+        if (error) {
+          console.error("❌ Error deducting credit:", error);
+          alert("❌ Could not deduct credit.");
         } else {
-          alert("❌ Could not deduct credit: " + deductData.error);
+          setCredits(newCredits);
+          setIsEdited(false); // reset for next submission
         }
       }
     } catch (err) {
@@ -97,6 +121,7 @@ const canEdit = isLoggedIn ?? auth?.isLoggedIn ?? false;
             placeholder={field.label}
             required={field.required}
             onFocus={handleEditAttempt}
+            onChange={() => setIsEdited(true)}
             disabled={!canEdit}
           />
         );
@@ -117,7 +142,8 @@ const canEdit = isLoggedIn ?? auth?.isLoggedIn ?? false;
               accept={field.name === "resume" ? ".pdf,.doc,.docx" : "image/*"}
               required={field.required}
               className="block w-full"
-              onClick={!canEdit ? handleEditAttempt : undefined}
+              onClick={() => setIsEdited(true)}
+              onFocus={handleEditAttempt}
               disabled={!canEdit}
             />
           </div>
@@ -131,6 +157,7 @@ const canEdit = isLoggedIn ?? auth?.isLoggedIn ?? false;
             placeholder={field.label}
             required={field.required}
             onFocus={handleEditAttempt}
+            onChange={() => setIsEdited(true)}
             disabled={!canEdit}
           />
         );
@@ -149,6 +176,7 @@ const canEdit = isLoggedIn ?? auth?.isLoggedIn ?? false;
             name={key}
             placeholder={key.charAt(0).toUpperCase() + key.slice(1) + " URL"}
             onFocus={handleEditAttempt}
+            onChange={() => setIsEdited(true)}
             disabled={!canEdit}
           />
         )
@@ -165,7 +193,6 @@ const canEdit = isLoggedIn ?? auth?.isLoggedIn ?? false;
       )}
 
       <div className="relative">
-        {/* Overlay only when NOT logged in */}
         {!canEdit && (
           <div className="absolute inset-0 bg-white/70 z-10 flex items-center justify-center">
             <p className="text-gray-700 font-medium text-lg">

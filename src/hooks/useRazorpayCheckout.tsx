@@ -1,4 +1,6 @@
 import { useCallback } from "react";
+import { useAuth } from "../context/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 declare global {
   interface Window {
@@ -6,62 +8,93 @@ declare global {
   }
 }
 
+interface OpenRazorpayProps {
+  amount: number;
+  plan: "monthly" | "semiannual" | "annual";
+}
+
 const useRazorpayCheckout = () => {
-  const openRazorpay = useCallback(async (amount: number) => {
-    try {
-      // 1. Create order from backend (API route)
-      const orderRes = await fetch("/api/razorpay/order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount }),
-      });
+  const { user, isLoggedIn } = useAuth();
 
-      const order = await orderRes.json();
-
-      if (!order.id) {
-        alert("❌ Failed to create order");
+  const openRazorpay = useCallback(
+    async ({ amount, plan }: OpenRazorpayProps) => {
+      if (!isLoggedIn || !user) {
+        alert("❌ Please login first");
         return;
       }
 
-      // 2. Open Razorpay Checkout
-      const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID, // frontend key (env)
-        amount: order.amount,
-        currency: "INR",
-        name: "Portfolio Builder",
-        description: "Payment for premium template",
-        order_id: order.id,
-        handler: async function (response: any) {
-          try {
-            // 3. Verify payment with backend
-            const verifyRes = await fetch("/api/razorpay/verify", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(response),
-            });
+      try {
+        // 1️⃣ Create Razorpay order via backend
+        const orderRes = await fetch("/api/razorpay/order", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ amount }),
+        });
 
-            const verify = await verifyRes.json();
+        const order = await orderRes.json();
+        if (!order.id) {
+          alert("❌ Failed to create order");
+          return;
+        }
 
-            if (verify.ok) {
-              alert("✅ Payment Verified!");
-            } else {
-              alert("❌ Payment Verification Failed!");
+        // 2️⃣ Configure Razorpay checkout
+        const options = {
+          key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+          amount: order.amount,
+          currency: "INR",
+          name: "Portfolio Builder",
+          description: `${plan} Subscription`,
+          order_id: order.id,
+          handler: async (response: any) => {
+            try {
+              // 3️⃣ Verify payment signature with backend
+              const verifyRes = await fetch("/api/razorpay/verify", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(response),
+              });
+
+              const verify = await verifyRes.json();
+              if (!verify.ok) {
+                alert("❌ Payment Verification Failed!");
+                return;
+              }
+
+              // 4️⃣ Call Supabase RPC to add credits & log purchase
+              const { data, error } = await supabase.rpc("purchase_pack", {
+                uid: user.id,
+                pack: plan, // must match 'monthly' | 'semiannual' | 'annual'
+              });
+
+              if (error) {
+                console.error("purchase_pack error:", error);
+                alert("⚠️ Payment verified but credits update failed");
+                return;
+              }
+
+              alert(`✅ ${plan} pack purchased! New balance: ${data} credits`);
+              // TODO: Update your UI context/state with `data` (latest credit balance)
+            } catch (err) {
+              console.error("Verification error:", err);
+              alert("❌ Could not verify payment");
             }
-          } catch (err) {
-            console.error("Verification error:", err);
-            alert("❌ Could not verify payment");
-          }
-        },
-        theme: { color: "#3399cc" },
-      };
+          },
+          prefill: {
+            name: user?.email?.split("@")[0] || "User",
+            email: user?.email || "",
+          },
+          theme: { color: "#3399cc" },
+        };
 
-      const rzp = new window.Razorpay(options);
-      rzp.open();
-    } catch (error) {
-      console.error("Checkout error:", error);
-      alert("❌ Payment failed to initialize");
-    }
-  }, []);
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+      } catch (error) {
+        console.error("Checkout error:", error);
+        alert("❌ Payment failed to initialize");
+      }
+    },
+    [user, isLoggedIn]
+  );
 
   return openRazorpay;
 };
