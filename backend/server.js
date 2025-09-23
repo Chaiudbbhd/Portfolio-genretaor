@@ -78,6 +78,8 @@ app.use("/api/template", auth, templateRoutes);
 // Removed `/api/user/me` route
 // ========================
 
+//nothing here
+
 // Server start
 const PORT = process.env.PORT || 4001;
 app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
