@@ -14,6 +14,7 @@ interface OpenRazorpayProps {
   plan: "monthly" | "semiannual" | "annual";
 }
 
+// setCredits is optional; if provided, will update local state
 const useRazorpayCheckout = (setCredits?: React.Dispatch<React.SetStateAction<number>>) => {
   const { user, isLoggedIn } = useAuth();
 
@@ -25,6 +26,7 @@ const useRazorpayCheckout = (setCredits?: React.Dispatch<React.SetStateAction<nu
       }
 
       try {
+        // 1️⃣ Create Razorpay order
         const orderRes = await fetch("/api/razorpay/order", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -37,6 +39,7 @@ const useRazorpayCheckout = (setCredits?: React.Dispatch<React.SetStateAction<nu
           return;
         }
 
+        // 2️⃣ Setup Razorpay checkout options
         const options = {
           key: import.meta.env.VITE_RAZORPAY_KEY_ID,
           amount: order.amount,
@@ -46,6 +49,7 @@ const useRazorpayCheckout = (setCredits?: React.Dispatch<React.SetStateAction<nu
           order_id: order.id,
           handler: async (response: any) => {
             try {
+              // 3️⃣ Verify payment on server
               const verifyRes = await fetch("/api/razorpay/verify", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -58,7 +62,7 @@ const useRazorpayCheckout = (setCredits?: React.Dispatch<React.SetStateAction<nu
                 return;
               }
 
-              // ✅ Update credits via Supabase RPC
+              // 4️⃣ Update credits via Supabase RPC
               const { data, error } = await supabase.rpc("purchase_pack", {
                 uid: user.id,
                 pack: plan,
@@ -72,7 +76,7 @@ const useRazorpayCheckout = (setCredits?: React.Dispatch<React.SetStateAction<nu
 
               alert(`✅ ${plan} pack purchased! New balance: ${data} credits`);
 
-              // ✅ Call setCredits if provided
+              // 5️⃣ Update local state if setCredits is provided
               if (setCredits) setCredits(data);
             } catch (err) {
               console.error("Verification error:", err);
@@ -86,6 +90,7 @@ const useRazorpayCheckout = (setCredits?: React.Dispatch<React.SetStateAction<nu
           theme: { color: "#3399cc" },
         };
 
+        // 6️⃣ Open Razorpay checkout
         const rzp = new window.Razorpay(options);
         rzp.open();
       } catch (error) {

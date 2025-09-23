@@ -30,24 +30,30 @@ export const StudentForms = ({ templateId, onSubmit, isLoggedIn }: Props) => {
   const [credits, setCredits] = useState<number | null>(null);
   const [isEdited, setIsEdited] = useState(false);
 
-  const openRazorpay = useRazorpayCheckout(setCredits);
+  const openRazorpay = useRazorpayCheckout(); // no need to pass setCredits
 
   if (!template) return <p>No form defined for this template.</p>;
 
-  // Fetch current user credits
+  // ✅ Fetch current user credits from Supabase
   useEffect(() => {
-    if (auth?.user?.id) {
-      (async () => {
-        const { data, error } = await supabase
-          .from("users")
-          .select("credits")
-          .eq("id", auth.user.id)
-          .single();
+    if (!auth?.user?.id) return;
 
-        if (error) console.error("❌ Error fetching credits:", error);
-        else setCredits(data.credits);
-      })();
-    }
+    const fetchCredits = async () => {
+      const { data, error } = await supabase
+        .from("users")
+        .select("credits")
+        .eq("id", auth.user.id)
+        .single();
+
+      if (error) {
+        console.error("❌ Error fetching credits:", error);
+        setCredits(0); // fallback
+      } else {
+        setCredits(data.credits);
+      }
+    };
+
+    fetchCredits();
   }, [auth?.user?.id]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -82,9 +88,9 @@ export const StudentForms = ({ templateId, onSubmit, isLoggedIn }: Props) => {
       }
 
       // 3️⃣ Deduct credit if edited
-      if (isEdited) {
+      if (isEdited && auth?.user?.id) {
         const { data: newCredits, error } = await supabase.rpc("use_template", {
-          uid: auth?.user?.id,
+          uid: auth.user.id,
           tid: templateId,
         });
 
