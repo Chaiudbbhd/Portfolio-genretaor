@@ -1,7 +1,7 @@
 // src/components/StudentForms.tsx
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import { supabase } from "../lib/supabaseClient";
+import { supabase } from "@/integrations/supabase/client"; // ✅ correct
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
