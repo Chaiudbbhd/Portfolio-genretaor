@@ -44,7 +44,7 @@ const Index = () => {
                 <li>❌ Limited support</li>
               </ul>
               <button
-                onClick={() => openRazorpay(99)}
+                onClick={() => openRazorpay({ amount: 99, plan: "monthly" })}
                 className="mt-6 w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
               >
                 Get Starter
@@ -63,7 +63,7 @@ const Index = () => {
                 <li>✅ Priority support</li>
               </ul>
               <button
-                onClick={() => openRazorpay(499)}
+                onClick={() => openRazorpay({ amount: 499, plan: "semiannual" })}
                 className="mt-6 w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
               >
                 Get Pro
@@ -82,7 +82,7 @@ const Index = () => {
                 <li>✅ Dedicated support</li>
               </ul>
               <button
-                onClick={() => openRazorpay(999)}
+                onClick={() => openRazorpay({ amount: 999, plan: "annual" })}
                 className="mt-6 w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
               >
                 Get Ultimate
