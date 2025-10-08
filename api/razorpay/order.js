@@ -1,4 +1,4 @@
-// api/razorpay/order.js
+// pages/api/razorpay/order.js
 import Razorpay from "razorpay";
 
 export default async function handler(req, res) {
@@ -9,20 +9,56 @@ export default async function handler(req, res) {
   try {
     const { amount, notes } = req.body;
 
+    // --- 1. Validate amount ---
+    if (amount === undefined || amount === null) {
+      return res.status(400).json({ error: "Missing amount" });
+    }
+
+    const numericAmount = Number(amount);
+    if (Number.isNaN(numericAmount) || numericAmount <= 0) {
+      return res.status(400).json({ error: "Invalid amount" });
+    }
+
+    // --- 2. Validate environment variables ---
+    const keyId = process.env.RAZORPAY_KEY_ID;
+    const keySecret = process.env.RAZORPAY_KEY_SECRET;
+
+    if (!keyId || !keySecret) {
+      console.error("Missing Razorpay credentials:", { keyId, keySecret });
+      return res.status(500).json({ error: "Razorpay credentials not configured" });
+    }
+
+    console.log("Razorpay keys found:", !!keyId, !!keySecret);
+
+    // --- 3. Initialize Razorpay instance ---
     const razorpay = new Razorpay({
-      key_id: process.env.RAZORPAY_KEY_ID,
-      key_secret: process.env.RAZORPAY_KEY_SECRET,
+      key_id: keyId,
+      key_secret: keySecret,
     });
 
-    const order = await razorpay.orders.create({
-      amount: amount * 100, // in paise
+    // --- 4. Create order payload ---
+    const orderPayload = {
+      amount: Math.round(numericAmount * 100), // convert rupees to paise
       currency: "INR",
       receipt: `rcpt_${Date.now()}`,
-      notes,
-    });
+      notes: notes || {},
+    };
 
-    res.status(200).json(order);
+    console.log("Creating Razorpay order with payload:", orderPayload);
+
+    // --- 5. Create order ---
+    let order;
+    try {
+      order = await razorpay.orders.create(orderPayload);
+    } catch (err) {
+      console.error("Razorpay order creation failed:", err);
+      return res.status(500).json({ error: "Razorpay order creation failed", details: err.message });
+    }
+
+    console.log("Razorpay order created successfully:", order.id);
+    return res.status(200).json(order);
   } catch (err) {
-    res.status(500).json({ error: "Order creation failed" });
+    console.error("Unexpected error in Razorpay handler:", err);
+    return res.status(500).json({ error: "Unexpected server error", details: err.message });
   }
 }
