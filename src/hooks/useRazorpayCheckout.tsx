@@ -1,4 +1,4 @@
-// hooks/useRazorpayCheckout.tsx
+// hooks/useRazorpayCheckout.ts
 import { useCallback } from "react";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,79 +30,72 @@ const useRazorpayCheckout = () => {
       }
 
       try {
-        // --- 1. Create Razorpay order via API ---
-        const orderRes = await fetch("/api/razorpay/order", {
+        // 1️⃣ Create Razorpay order
+        const res = await fetch("/api/razorpay/order", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            amount,
-            notes: { plan },
-          }),
+          body: JSON.stringify({ amount, plan }),
         });
 
-        const { order, key } = await orderRes.json();
+        const data = await res.json();
 
-        if (!order?.id || !key) {
-          console.error("Order creation failed:", { order, key });
+        if (!data?.order || !data?.key) {
+          console.error("Order creation failed:", data);
           alert("❌ Failed to create order");
           return;
         }
 
-        // --- 2. Razorpay Checkout options ---
         const options = {
-          key, // dynamic public key from API
-          amount: order.amount,
+          key: data.key, // Public key
+          amount: data.order.amount,
           currency: "INR",
           name: "Portfolio Builder",
           description: `${plan} Subscription`,
-          order_id: order.id,
+          order_id: data.order.id,
+          prefill: {
+            name: user.email?.split("@")[0] || "User",
+            email: user.email || "",
+          },
+          theme: { color: "#3399cc" },
           handler: async (response: any) => {
             try {
-              // --- 3. Verify payment ---
+              // 2️⃣ Verify payment
               const verifyRes = await fetch("/api/razorpay/verify", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(response),
               });
-              const verify = await verifyRes.json();
 
-              if (!verify.ok) {
-                alert("❌ Payment Verification Failed!");
+              const verifyData = await verifyRes.json();
+              if (!verifyData.ok) {
+                alert("❌ Payment verification failed");
                 return;
               }
 
-              // --- 4. Update credits via Supabase RPC ---
-              const { data: newCredits, error } = await supabase.rpc(
-                "purchase_pack",
-                { uid: user.id, pack: plan }
-              );
+              // 3️⃣ Update credits via Supabase RPC
+              const { data: newCredits, error } = await supabase.rpc("purchase_pack", {
+                uid: user.id,
+                pack: plan,
+              });
 
               if (error) {
-                console.error("purchase_pack error:", error);
-                alert("⚠️ Payment verified but credits update failed");
+                console.error("Supabase update error:", error);
+                alert("⚠️ Payment verified, but credits update failed");
                 return;
               }
 
-              alert(`✅ ${plan} pack purchased! New balance: ${newCredits} credits`);
-
+              alert(`✅ ${plan} plan purchased! New balance: ${newCredits} credits`);
             } catch (err) {
-              console.error("Verification error:", err);
+              console.error("Payment verification error:", err);
               alert("❌ Could not verify payment");
             }
           },
-          prefill: {
-            name: user?.email?.split("@")[0] || "User",
-            email: user?.email || "",
-          },
-          theme: { color: "#3399cc" },
         };
 
-        // --- 5. Open Razorpay Checkout ---
         const rzp = new window.Razorpay(options);
         rzp.open();
-
-      } catch (error) {
-        console.error("Checkout error:", error);
+      } catch (err) {
+        console.error("Razorpay checkout initialization error:", err);
         alert("❌ Payment failed to initialize");
       }
     },
