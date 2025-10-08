@@ -24,22 +24,33 @@ const useRazorpayCheckout = () => {
         return;
       }
 
+      if (!amount || amount <= 0) {
+        alert("❌ Invalid payment amount");
+        return;
+      }
+
       try {
-        // Create Razorpay order
+        // --- 1. Create Razorpay order via API ---
         const orderRes = await fetch("/api/razorpay/order", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ amount }),
+          body: JSON.stringify({
+            amount,
+            notes: { plan },
+          }),
         });
-        const order = await orderRes.json();
 
-        if (!order.id) {
+        const { order, key } = await orderRes.json();
+
+        if (!order?.id || !key) {
+          console.error("Order creation failed:", { order, key });
           alert("❌ Failed to create order");
           return;
         }
 
+        // --- 2. Razorpay Checkout options ---
         const options = {
-          key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+          key, // dynamic public key from API
           amount: order.amount,
           currency: "INR",
           name: "Portfolio Builder",
@@ -47,6 +58,7 @@ const useRazorpayCheckout = () => {
           order_id: order.id,
           handler: async (response: any) => {
             try {
+              // --- 3. Verify payment ---
               const verifyRes = await fetch("/api/razorpay/verify", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -59,13 +71,10 @@ const useRazorpayCheckout = () => {
                 return;
               }
 
-              // ✅ Update credits via Supabase RPC
+              // --- 4. Update credits via Supabase RPC ---
               const { data: newCredits, error } = await supabase.rpc(
                 "purchase_pack",
-                {
-                  uid: user.id,
-                  pack: plan,
-                }
+                { uid: user.id, pack: plan }
               );
 
               if (error) {
@@ -74,12 +83,7 @@ const useRazorpayCheckout = () => {
                 return;
               }
 
-              // ✅ Notify user
               alert(`✅ ${plan} pack purchased! New balance: ${newCredits} credits`);
-
-              // ⚡ Dispatch a Supabase real-time event to refresh credits
-              // You can trigger a state update in your component by re-fetching credits
-              // Example: call a custom callback from AuthContext if implemented
 
             } catch (err) {
               console.error("Verification error:", err);
@@ -93,8 +97,10 @@ const useRazorpayCheckout = () => {
           theme: { color: "#3399cc" },
         };
 
+        // --- 5. Open Razorpay Checkout ---
         const rzp = new window.Razorpay(options);
         rzp.open();
+
       } catch (error) {
         console.error("Checkout error:", error);
         alert("❌ Payment failed to initialize");
