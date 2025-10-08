@@ -32,7 +32,7 @@ export const Pricing = () => {
             </div>
             <h3 className="text-2xl font-bold mb-2">Monthly</h3>
             <p className="text-gray-600 mb-4">Perfect for quick projects</p>
-            <p className="text-4xl font-bold mb-6">₹99</p>
+            <p className="text-4xl font-bold mb-6">₹199</p>
             <ul className="mb-6 space-y-3 text-gray-700">
               <li className="flex items-center gap-2"><Check className="text-green-600 h-5 w-5" /> Access to all templates</li>
               <li className="flex items-center gap-2"><Check className="text-green-600 h-5 w-5" /> Generate up to 2 templates</li>
