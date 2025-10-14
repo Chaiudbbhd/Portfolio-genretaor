@@ -17,7 +17,7 @@ const App = () => {
     const formData = new FormData(form);
     const jsonData = Object.fromEntries(formData.entries());
 
-    const res = await fetch("/api/sendMail", {
+    const res = await fetch("/api/razorpay/sendMail", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(jsonData),

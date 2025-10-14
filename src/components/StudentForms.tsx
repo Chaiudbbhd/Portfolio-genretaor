@@ -84,7 +84,7 @@ useEffect(() => {
     try {
       // 1️⃣ Send email
       const jsonData = Object.fromEntries(formData.entries());
-const res = await fetch("/api/sendMail", {
+const res = await fetch("/api/razorpay/sendMail", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify(jsonData),
