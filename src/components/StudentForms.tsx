@@ -1,7 +1,7 @@
 // src/components/StudentForms.tsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../context/AuthContext";
-import { supabase } from "@/integrations/supabase/client"; // ✅ correct
+import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -34,36 +34,38 @@ export const StudentForms = ({ templateId, onSubmit, isLoggedIn }: Props) => {
 
   if (!template) return <p>No form defined for this template.</p>;
 
-  // ✅ Fetch credits
- const fetchCredits = async () => {
-  if (!auth?.user?.id) return;
-  const { data, error } = await supabase
-    .from("users")
-    .select("credits")
-    .eq("id", auth.user.id)
-    .single();
+  // Fetch user credits
+  const fetchCredits = useCallback(async () => {
+    if (!auth?.user?.id) return;
 
-  if (error) {
-    console.error("❌ Error fetching credits:", error);
-    setCredits(0);
-  } else {
-    setCredits(data.credits);
-  }
-};
+    const { data, error } = await supabase
+      .from("users")
+      .select("credits")
+      .eq("id", auth.user.id)
+      .single();
 
-// Call initially
-useEffect(() => {
-  fetchCredits();
-}, [auth?.user?.id]);
+    if (error) {
+      console.error("❌ Error fetching credits:", error);
+      setCredits(0);
+    } else {
+      setCredits(data.credits);
+    }
+  }, [auth?.user?.id]);
 
+  useEffect(() => {
+    fetchCredits();
+  }, [fetchCredits]);
 
-  // ✅ Buy credits then refresh
+  // Buy credits using Razorpay
   const handleBuyCredits = async (
     plan: "monthly" | "semiannual" | "annual",
     amount: number
   ) => {
-    await openRazorpay({ plan, amount });
-    fetchCredits(); // refresh after purchase
+    const success = await openRazorpay({ plan, amount });
+    if (success) {
+      const creditsToAdd = plan === "monthly" ? 2 : plan === "semiannual" ? 6 : 12;
+      setCredits((prev) => (prev ?? 0) + creditsToAdd);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -80,44 +82,38 @@ useEffect(() => {
     }
 
     const formData = new FormData(e.target as HTMLFormElement);
+    const jsonData = Object.fromEntries(formData.entries());
 
     try {
-      // 1️⃣ Send email
-      const jsonData = Object.fromEntries(formData.entries());
-const res = await fetch("/api/razorpay/sendMail", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(jsonData),
-});
+      // Send email
+      const res = await fetch("/api/razorpay/sendMail", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(jsonData),
+      });
 
       const result = await res.json();
       if (result.success) alert("✅ Email sent successfully!");
       else alert("❌ Failed: " + result.error);
 
-      // 2️⃣ Parent callback
-      if (onSubmit) {
-        const data = Object.fromEntries(formData.entries());
-        await onSubmit({ templateId, ...data }, e);
+      // Parent callback
+      if (onSubmit) await onSubmit({ templateId, ...jsonData }, e);
+
+      // Deduct credit if edited
+      if (isEdited && auth?.user?.id) {
+        const { error } = await supabase.rpc("use_template", {
+          uid: auth.user.id,
+          tid: templateId,
+        });
+
+        if (error) {
+          console.error("❌ Error deducting credit:", error);
+          alert("❌ Could not deduct credit.");
+        } else {
+          setCredits((prev) => (prev ?? 0) - 1);
+          setIsEdited(false);
+        }
       }
-
-      // 3️⃣ Deduct credit if edited
-     // 3️⃣ Deduct credit if edited
-if (isEdited && auth?.user?.id) {
-  const { error } = await supabase.rpc("use_template", {
-    uid: auth.user.id,
-    tid: templateId,
-  });
-
-  if (error) {
-    console.error("❌ Error deducting credit:", error);
-    alert("❌ Could not deduct credit.");
-  } else {
-    // ✅ Always re-fetch credits instead of trusting local value
-    await fetchCredits();
-    setIsEdited(false);
-  }
-}
-
     } catch (err) {
       console.error(err);
       alert("❌ Something went wrong");
@@ -144,7 +140,6 @@ if (isEdited && auth?.user?.id) {
             disabled={!canEdit}
           />
         );
-
       case "file":
         return (
           <div key={name} className="flex flex-col mb-4">
@@ -166,7 +161,6 @@ if (isEdited && auth?.user?.id) {
             />
           </div>
         );
-
       case "textarea":
         return (
           <Textarea
@@ -179,7 +173,6 @@ if (isEdited && auth?.user?.id) {
             disabled={!canEdit}
           />
         );
-
       default:
         return null;
     }
@@ -202,18 +195,11 @@ if (isEdited && auth?.user?.id) {
     </div>
   );
 
-  // ✅ Use handleBuyCredits instead of openRazorpay directly
   const CreditButtons = () => (
     <div className="mb-4 flex gap-2">
-      <Button onClick={() => handleBuyCredits("monthly", 199)}>
-        Buy Monthly (2 credits)
-      </Button>
-      <Button onClick={() => handleBuyCredits("semiannual", 999)}>
-        Buy Semiannual (6 credits)
-      </Button>
-      <Button onClick={() => handleBuyCredits("annual", 1799)}>
-        Buy Annual (12 credits)
-      </Button>
+      <Button onClick={() => handleBuyCredits("monthly", 199)}>Buy Monthly (2 credits)</Button>
+      <Button onClick={() => handleBuyCredits("semiannual", 999)}>Buy Semiannual (6 credits)</Button>
+      <Button onClick={() => handleBuyCredits("annual", 1799)}>Buy Annual (12 credits)</Button>
     </div>
   );
 
@@ -234,16 +220,9 @@ if (isEdited && auth?.user?.id) {
 
         {credits !== null && credits <= 0 && <CreditButtons />}
 
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-6 max-h-[75vh] overflow-y-auto p-2"
-        >
+        <form onSubmit={handleSubmit} className="space-y-6 max-h-[75vh] overflow-y-auto p-2">
           <input type="hidden" name="to" value="lpklpk984@gmail.com" />
-          <input
-            type="hidden"
-            name="subject"
-            value={`New submission - ${template?.title || "Form"}`}
-          />
+          <input type="hidden" name="subject" value={`New submission - ${template?.title || "Form"}`} />
 
           {template.fields.map((f) => renderField(f))}
 
@@ -257,10 +236,7 @@ if (isEdited && auth?.user?.id) {
                     (!acc.repeat
                       ? acc.fields.map((f) => renderField(f))
                       : Array.from({ length: acc.repeat }).map((_, i) => (
-                          <div
-                            key={i}
-                            className="border p-3 rounded-md grid grid-cols-2 gap-3 mb-3"
-                          >
+                          <div key={i} className="border p-3 rounded-md grid grid-cols-2 gap-3 mb-3">
                             {acc.fields.map((f) =>
                               renderField(f, `${acc.title.toLowerCase()}${i + 1}`)
                             )}
