@@ -5,25 +5,37 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { templateId, name, email, about, github, linkedin, instagram, facebook, twitter, youtube, projects, articles, skills } = req.body;
+  const {
+    templateId,
+    name,
+    email,
+    about,
+    github,
+    linkedin,
+    instagram,
+    facebook,
+    twitter,
+    youtube,
+    projects,
+    articles,
+    skills,
+  } = req.body;
 
   try {
-    // Create transporter
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
-        user: process.env.EMAIL_USER, // your gmail
-        pass: process.env.EMAIL_PASS, // app password
+        user: process.env.EMAIL_USER, // your Gmail
+        pass: process.env.EMAIL_PASS, // your App Password
       },
     });
 
-    // Mail content
     const mailOptions = {
       from: process.env.EMAIL_USER,
-      to: ["yourEmail@gmail.com", "yourFriend@gmail.com"], // both you + friend
+      to: ["lpklpk984@gmail.com", "arvindguggilapu@gmail.com"], // ✅ you + friend
       subject: `New Portfolio Submission - ${templateId}`,
       html: `
-        <h2>New Submission</h2>
+        <h2>New Portfolio Submission</h2>
         <p><b>Name:</b> ${name}</p>
         <p><b>Email:</b> ${email}</p>
         <p><b>About:</b> ${about}</p>
@@ -40,10 +52,9 @@ export default async function handler(req, res) {
     };
 
     await transporter.sendMail(mailOptions);
-
-    res.status(200).json({ success: true, message: "Email sent successfully" });
+    res.status(200).json({ success: true, message: "✅ Email sent successfully" });
   } catch (error) {
-    console.error(error);
+    console.error("Email error:", error);
     res.status(500).json({ success: false, error: error.message });
   }
 }

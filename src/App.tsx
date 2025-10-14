@@ -13,25 +13,28 @@ const queryClient = new QueryClient();
 
 const App = () => {
   const handleFormSubmit = async (form: HTMLFormElement) => {
-    try {
-      const formData = new FormData(form);
+  try {
+    const formData = new FormData(form);
+    const jsonData = Object.fromEntries(formData.entries());
 
-      const res = await fetch("http://localhost:4001/api/sendMail", {
-        method: "POST",
-        body: formData,
-      });
+    const res = await fetch("/api/sendMail", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(jsonData),
+    });
 
-      const data = await res.json();
-      if (data.success) {
-        alert("✅ Mail sent!");
-      } else {
-        alert("❌ Failed: " + data.error);
-      }
-    } catch (err) {
-      console.error(err);
-      alert("❌ Something went wrong");
+    const data = await res.json();
+    if (data.success) {
+      alert("✅ Mail sent successfully!");
+    } else {
+      alert("❌ Failed: " + data.error);
     }
-  };
+  } catch (err) {
+    console.error(err);
+    alert("❌ Something went wrong");
+  }
+};
+
 
   return (
     <QueryClientProvider client={queryClient}>

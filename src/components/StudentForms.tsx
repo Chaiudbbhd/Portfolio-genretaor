@@ -83,10 +83,13 @@ useEffect(() => {
 
     try {
       // 1️⃣ Send email
-      const res = await fetch("http://localhost:4001/api/sendMail", {
-        method: "POST",
-        body: formData,
-      });
+      const jsonData = Object.fromEntries(formData.entries());
+const res = await fetch("/api/sendMail", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(jsonData),
+});
+
       const result = await res.json();
       if (result.success) alert("✅ Email sent successfully!");
       else alert("❌ Failed: " + result.error);
